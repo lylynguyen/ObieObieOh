@@ -3,9 +3,27 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start"
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "server": "nodemon server/server.js"
   },
   "dependencies": {
-    "react-native": "^0.18.1"
+    "react-native": "^0.18.1",
+    "react-native-scrollable-tab-view": "^0.3.5",
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.14.2",
+    "cookie-parser": "^1.4.0",
+    "cors": "^2.7.1",
+    "dotenv": "^2.0.0",
+    "express": "^4.13.3",
+    "express-session": "^1.12.1",
+    "fs": "0.0.2",
+    "jquery": "^2.2.0",
+    "jwt-simple": "^0.4.1",
+    "mysql": "^2.10.0",
+    "passport": "^0.3.2",
+    "passport-venmo": "0.0.1",
+    "request": "^2.67.0",
+    "sequelize": "^3.17.1",
+    "socket.io": "^1.4.5"
   }
 }
