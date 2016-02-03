@@ -18,6 +18,7 @@ var ScrollableTabView = require('react-native-scrollable-tab-view');
 
 var messages = [{name: "Lyly", text: "a;lshee hksehkahfj askhfakjse ashkjehakjes afeksjfhk esksjks jfhskfe"},{name: "Boner", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Joey", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Nick", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."}]
 // var messages = [];
+var finance = [{bill: "Rent", total: "$200.00"}, {bill: "Electric", total: "$50.00"}];
 var border = function(color) {
   return {
     borderWidth: 4,
@@ -28,7 +29,8 @@ var border = function(color) {
 var App = React.createClass({
   getInitialState: function() {
     return {
-      messages: messages
+      messages: messages,
+      finance: finance,
     }
   },
   // addMessage: function(messageText) {
@@ -47,13 +49,13 @@ var App = React.createClass({
   // },
   render: function() {
     return (
-      <View style={[styles.container, border('black')]}>
+      <View style={[styles.container]}>
         {/*<Navbar />
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
           <MessageContainer messages={this.state.messages} tabLabel="Messages" />
-          <MessageContainer messages={this.state.messages} tabLabel="Mo Messages" />
-          <MessageContainer messages={this.state.messages} tabLabel="S'MO Messages" />
+          <FinanceContainer messages={this.state.finance} tabLabel="Finance" />
+          <MessageContainer messages={this.state.messages} tabLabel="Chores" />
         </ScrollableTabView>
       </View>
     )
@@ -63,7 +65,7 @@ var App = React.createClass({
 var Form = React.createClass({
   getInitialState: function() {
     return {
-      text: 'hi'
+      text: 'Hi'
     }
   },
   addMessage: function() {
@@ -100,15 +102,6 @@ var Form = React.createClass({
   }
 });
 
-var Navbar = React.createClass({
-  render: function() {
-    return (
-      <View style={[styles.navbar, border('green')]}>
-        <Text>Navbar</Text>
-      </View>
-    )
-  }
-})
 
 var MessageContainer = React.createClass({
   getInitialState: function() {
@@ -162,32 +155,137 @@ var MessageEntry = React.createClass({
   }
 });
 
+
+var FinanceForm = React.createClass({
+  getInitialState: function() {
+    return {
+      bill: 'bill',
+      total: '$200.00'
+    }
+  },
+  addBill: function() {
+    var financeObject = {bill: this.state.bill, total: this.state.total}
+    this.props.sendBill(financeObject);
+  },
+  sendBillButton: function(){
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.addBill}
+      style={[styles.sendMessageButton]}
+      >
+      <Text>
+        Send Bill
+      </Text>
+    </TouchableHighlight>
+  },
+  render: function() {
+    return (
+      <View style={[styles.formTest, border('blue')]}>
+      <Text>
+        Bill:</Text>
+        <TextInput
+          onChangeText={(bill) => this.setState({bill})}
+          value={this.state.bill}
+          rejectResponderTermination={false}
+          style={styles.textInput}
+        />
+        <TextInput
+          onChangeText={(total) => this.setState({total})}
+          value={this.state.total}
+          rejectResponderTermination={false}
+          style={styles.textInput}
+        />
+        <View style={[styles.buttonContainer, border('red')]}>
+          {this.sendBillButton()}
+        </View>
+      </View>
+    )
+  }
+});
+
+var FinanceContainer = React.createClass({
+  getInitialState: function(){
+    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    return  {
+      finance: finance,
+      dataSource: ds.cloneWithRows(finance)
+    };
+  },
+  sendBill: function(financeObj){
+    this.state.finance.push(financeObj);
+    this.setState({
+      dataSource: this.state.dataSource.cloneWithRows(this.state.finance),
+      finance: this.state.finance
+    })
+  },
+  renderBillEntry: function(rowData) {
+    return (
+      <View style={[styles.messageEntry, border('black')]}>
+        <Text>
+          Bill: {rowData.bill}
+        </Text>
+        <Text>
+          Total Bill: {rowData.total}
+        </Text>
+      </View>
+    )
+  },
+  render: function() {
+    return (
+      <View style={[styles.messageContainer, border('red')]}>
+        <Text style={styles.viewTitle}></Text>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={this.renderBillEntry}
+        />
+        <FinanceForm sendBill={this.sendBill} />
+      </View>
+    )
+  }
+});
+
+// var FinanceEntry = React.createClass({
+//   render: function() {
+//     return (
+//       <View style={styles.messageEntry}>
+//         <Text>{this.props.user}</Text>
+//         <Text>{this.props.bill}</Text>
+//         <Text>{this.props.total}</Text>
+//       </View>
+//     )
+//   }
+// });
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 25,
     justifyContent: 'center',
     alignItems: 'stretch',
-    backgroundColor: '#F5FCFF',
+    backgroundColor: '#98DDDE',
+
   },
   navbar: {
     flex: 2,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+
+
   },
   messageContainer: {
     flex: 8,
     justifyContent: 'center',
-    alignItems: 'stretch'
+    alignItems: 'stretch',
+    backgroundColor: '#F5FCFF',
   },
   form: {
     flex: 3,
     justifyContent: 'center',
-    alignItems: 'stretch'
+    alignItems: 'stretch',
   },
   formTest: {
     justifyContent: 'center',
-    alignItems: 'stretch'
+    alignItems: 'stretch',
   },
   textInput: {
     height: 40,
@@ -198,7 +296,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flex: 1,
-    alignItems: 'stretch'
+    alignItems: 'stretch',
   },
   sendMessageButton: {
     borderWidth: 2,
@@ -206,7 +304,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   viewTitle: {
     fontSize: 20,
