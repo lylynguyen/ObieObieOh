@@ -355,6 +355,7 @@ var ChoreContainer = React.createClass({
     )
   },
   render: function() {
+    console.log('REFS', this.refs); 
     return (
       <View style={[styles.messageContainer, border('red')]}>
         <Text style={styles.viewTitle}>Chores</Text>
@@ -362,13 +363,14 @@ var ChoreContainer = React.createClass({
           dataSource={this.state.dataSource}
           renderRow={this.renderChoreEntry}
         />
-        <View style={{ flexDirection: 'column', flex: .33}}>
+        <View style={[styles.overlay, {flexDirection: 'column', flex: .33}]}>
           <Select
             width={100}
             ref="SELECT1"
             optionListRef={this._getOptionList.bind(this)}
             defaultValue="Select User"
-            onSelect={this._user.bind(this)}>
+            onSelect={this._user.bind(this)}
+            style={[styles.overlay]}>
             <Option>Joey</Option>
             <Option>Justin</Option>
             <Option>Lyly</Option>
@@ -376,13 +378,14 @@ var ChoreContainer = React.createClass({
           </Select>
           <OptionList ref="OPTIONLIST"/>
         </View>
-        <View style={{ flexDirection: 'column', flex: .33}}>
+        <View style={[styles.overlay, {flexDirection: 'column', flex: .33}]}>
           <Select
             width={100}
             ref="SELECT2"
             optionListRef={this._getOptionList2.bind(this)}
             defaultValue="Select Area"
-            onSelect={this._category.bind(this)}>
+            onSelect={this._category.bind(this)}
+            style={[styles.overlay]}>
             <Option>Kitchen</Option>
             <Option>Bathroom</Option>
             <Option>Bedroom</Option>

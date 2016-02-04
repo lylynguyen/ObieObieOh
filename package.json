@@ -23,6 +23,7 @@
     "react-native": "^0.18.1",
     "react-native-dropdown": "0.0.6",
     "react-native-scrollable-tab-view": "^0.3.5",
+    "react-native-selectme": "0.0.5",
     "react-redux": "^4.2.1",
     "redux": "^3.2.1",
     "request": "^2.67.0",
