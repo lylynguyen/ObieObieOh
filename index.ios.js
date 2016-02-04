@@ -14,11 +14,19 @@ import React, {
   TouchableHighlight
 } from 'react-native';
 
+
 var ScrollableTabView = require('react-native-scrollable-tab-view');
 
 var messages = [{name: "Lyly", text: "a;lshee hksehkahfj askhfakjse ashkjehakjes afeksjfhk esksjks jfhskfe"},{name: "Boner", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Joey", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Nick", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."}]
-// var messages = [];
 var finance = [{bill: "Rent", total: "$200.00"}, {bill: "Electric", total: "$50.00"}];
+
+var bills = [{username: 'lyly', payer: 'Nick',total: 200, name: 'rent', duedate: '2016-03-03', datepaid: null}, {username: 'Justin', payer: 'Nick', total: 200, name: 'water', duedate: '2016-03-04', datepaid: null} ];
+
+var billHistory = [{username: 'lyly', payer: 'Nick',total: 200, name: 'rent', duedate: '2016-03-03', datepaid: 'completed'}, {username: 'Justin', payer: 'Nick', total: 200, name: 'water', duedate: '2016-03-04', datepaid: 'completed'}];
+
+var paymentOwed = [{username: 'lyly', payee: 'Nick',total: 200, name: 'rent', duedate: '2016-03-03', datepaid: null}, {username: 'Justin', payee: 'Nick', total: 200, name: 'water', duedate: '2016-03-04', datepaid: null}];
+
+
 var border = function(color) {
   return {
     borderWidth: 4,
@@ -30,23 +38,9 @@ var App = React.createClass({
   getInitialState: function() {
     return {
       messages: messages,
-      finance: finance,
+      finance: finance
     }
   },
-  // addMessage: function(messageText) {
-  //   console.log('adding message: ', messageText);
-  //   this.state.messages.push({
-  //     name: 'Justin',
-  //     text: messageText
-  //   })
-  //   console.log(this.state.messages);
-  //   this.setState({dataSource: this.state.dataSource.cloneWithRows(
-  //     this._genRows(this._pressData)
-  //   )});
-  //   this.setState({
-  //     messages: this.state.messages
-  //   });
-  // },
   render: function() {
     return (
       <View style={[styles.container]}>
@@ -54,18 +48,20 @@ var App = React.createClass({
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
           <MessageContainer messages={this.state.messages} tabLabel="Messages" />
-          <FinanceContainer messages={this.state.finance} tabLabel="Finance" />
-          <MessageContainer messages={this.state.messages} tabLabel="Chores" />
+          <FinanceContainer finance={this.state.finance} tabLabel="Finance" />
+          <PaymentAndBillsContainer bill={this.state.bill} tabLabel="Pay/Bill"/>
+
         </ScrollableTabView>
       </View>
     )
   }
 });
 
+
 var Form = React.createClass({
   getInitialState: function() {
     return {
-      text: 'Hi'
+      text: ''
     }
   },
   addMessage: function() {
@@ -101,7 +97,6 @@ var Form = React.createClass({
     )
   }
 });
-
 
 var MessageContainer = React.createClass({
   getInitialState: function() {
@@ -155,106 +150,139 @@ var MessageEntry = React.createClass({
   }
 });
 
+var PaymentAndBillsContainer = React.createClass({
+  addPayee: function() {
+    var payeeObject = {payee:this.state.payee, payer: this.state.payer,date:this.state.date, phonenumber:this.state.phonenumber};
+      this.props.sendBill(billPaymentObject);
+  },
 
-var FinanceForm = React.createClass({
-  getInitialState: function() {
-    return {
-      bill: 'bill',
-      total: '$200.00'
-    }
+  renderPaymentAndBill: function() {
+    return  (
+      <View>
+        <TextInput
+          placeholder="Name, email, phone number"
+          // rejectResponderTermination={false}
+           style={{height: 40, paddingLeft: 10, textAlign: 'justify'}}
+        />
+      </View>
+    )
   },
-  addBill: function() {
-    var financeObject = {bill: this.state.bill, total: this.state.total}
-    this.props.sendBill(financeObject);
-  },
-  sendBillButton: function(){
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.addBill}
-      style={[styles.sendMessageButton]}
-      >
-      <Text>
-        Send Bill
-      </Text>
-    </TouchableHighlight>
-  },
+
   render: function() {
     return (
-      <View style={[styles.formTest, border('blue')]}>
-      <Text>
-        Bill:</Text>
-        <TextInput
-          onChangeText={(bill) => this.setState({bill})}
-          value={this.state.bill}
-          rejectResponderTermination={false}
-          style={styles.textInput}
-        />
-        <TextInput
-          onChangeText={(total) => this.setState({total})}
-          value={this.state.total}
-          rejectResponderTermination={false}
-          style={styles.textInput}
-        />
-        <View style={[styles.buttonContainer, border('red')]}>
-          {this.sendBillButton()}
+    <View>
+      <View style={[styles.formTest]}>
+      <Text style={styles.viewTitle}>Pay or Request</Text>
+      </View>
+      <View style={styles.messageEntry}>
+          {this.renderPaymentAndBill()}
+        </View>
+    </View>
+    )
+  }
+});
+
+var FinanceContainer = React.createClass({
+  render: function() {
+    return (
+      <View style ={[styles.messageEntry, border('black')]}>
+        <Text style={styles.viewTitle}> Bills</Text>
+        <View>
+          <BillEntry />
+        </View>
+        <Text style={styles.viewTitle}> Payment Owed to You</Text>
+        <View>
+          <PaymentOwedEntry />
+        </View>
+        <View>
+        <Text style={styles.viewTitle}> Bill History</Text>
+          <BillHistory />
         </View>
       </View>
     )
   }
 });
 
-var FinanceContainer = React.createClass({
-  getInitialState: function(){
-    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-    return  {
-      finance: finance,
-      dataSource: ds.cloneWithRows(finance)
+var BillHistory = React.createClass({
+  getInitialState: function () {
+  var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+  return {
+    billHistory: billHistory,
+    dataSource: ds.cloneWithRows(billHistory)
     };
-  },
-  sendBill: function(financeObj){
-    this.state.finance.push(financeObj);
-    this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(this.state.finance),
-      finance: this.state.finance
-    })
-  },
-  renderBillEntry: function(rowData) {
-    return (
-      <View style={[styles.messageEntry, border('black')]}>
-        <Text>
-          Bill: {rowData.bill}
-        </Text>
-        <Text>
-          Total Bill: {rowData.total}
-        </Text>
-      </View>
-    )
   },
   render: function() {
     return (
-      <View style={[styles.messageContainer, border('red')]}>
-        <Text style={styles.viewTitle}></Text>
+     <View style={[styles.messageEntry, border('blue')]}>
         <ListView
           dataSource={this.state.dataSource}
-          renderRow={this.renderBillEntry}
+          renderRow={(rowData) => <Text>{rowData.total}{rowData.name}{rowData.datepaid}</Text>}
         />
-        <FinanceForm sendBill={this.sendBill} />
+      </View>
+    )
+  }
+})
+
+var PaymentOwedEntry = React.createClass({
+  getInitialState: function() {
+    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    return {
+      paymentOwed: paymentOwed,
+      dataSource: ds.cloneWithRows(paymentOwed)
+    };
+  },
+  render: function () {
+    return (
+      <View style={[styles.messageEntry, border('blue')]}>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={(rowData) => <Text>{rowData.username} owes {rowData.username} {rowData.total} for {rowData.name} due on {rowData.duedate}</Text>}
+        />
       </View>
     )
   }
 });
 
-// var FinanceEntry = React.createClass({
-//   render: function() {
-//     return (
-//       <View style={styles.messageEntry}>
-//         <Text>{this.props.user}</Text>
-//         <Text>{this.props.bill}</Text>
-//         <Text>{this.props.total}</Text>
-//       </View>
-//     )
-//   }
-// });
+var BillEntry = React.createClass({
+  getInitialState: function() {
+    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    return {
+      bills: bills,
+      dataSource: ds.cloneWithRows(bills)
+    };
+  },
+  sendBill: function(billObj) {
+    this.state.bills.push(billObj);
+    this.setState({
+      dataSource:this.state.dataSource.cloneWithRows(this.state.bills),
+      bills: this.state.bills
+    })
+  },
+  renderBillEntry: function(rowData) {
+    return (
+      <View>
+        <Text>{rowData.payer} owes
+        {rowData.username}
+        {rowData.total} for 
+
+        {rowData.name} due on {rowData.duedate} </Text>
+      </View>
+    )
+  },
+
+  render: function() {
+    return (
+      <View style={[styles.messageEntry, border('black')]}>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={this.renderBillEntry}
+        />
+      </View>
+    )
+  }
+  //need to move the submit/send bill function to pay/request container
+})
+
 
 const styles = StyleSheet.create({
   container: {
