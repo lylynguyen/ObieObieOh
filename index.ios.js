@@ -57,7 +57,6 @@ var App = React.createClass({
   }
 });
 
-
 var Form = React.createClass({
   getInitialState: function() {
     return {
@@ -139,16 +138,16 @@ var MessageContainer = React.createClass({
   }
 });
 
-var MessageEntry = React.createClass({
-  render: function() {
-    return (
-      <View style={styles.messageEntry}>
-        <Text>{this.props.user}</Text>
-        <Text>{this.props.text}</Text>
-      </View>
-    )
-  }
-});
+// var MessageEntry = React.createClass({
+//   render: function() {
+//     return (
+//       <View style={styles.messageEntry}>
+//         <Text>{this.props.user}</Text>
+//         <Text>{this.props.text}</Text>
+//       </View>
+//     )
+//   }
+// });
 
 var PaymentAndBillsContainer = React.createClass({
   addPayee: function() {
@@ -213,7 +212,7 @@ var BillHistory = React.createClass({
   },
   render: function() {
     return (
-     <View style={[styles.messageEntry, border('blue')]}>
+     <View style={[styles.messagesEntry, border('blue')]}>
         <ListView
           dataSource={this.state.dataSource}
           renderRow={(rowData) => <Text>{rowData.total}{rowData.name}{rowData.datepaid}</Text>}
@@ -233,7 +232,7 @@ var PaymentOwedEntry = React.createClass({
   },
   render: function () {
     return (
-      <View style={[styles.messageEntry, border('blue')]}>
+      <View style={[styles.messagesEntry, border('blue')]}>
         <ListView
           dataSource={this.state.dataSource}
           renderRow={(rowData) => <Text>{rowData.username} owes {rowData.username} {rowData.total} for {rowData.name} due on {rowData.duedate}</Text>}
@@ -242,6 +241,8 @@ var PaymentOwedEntry = React.createClass({
     )
   }
 });
+
+var payBill; //function to pay 
 
 var BillEntry = React.createClass({
   getInitialState: function() {
@@ -260,12 +261,16 @@ var BillEntry = React.createClass({
   },
   renderBillEntry: function(rowData) {
     return (
-      <View>
+      <View style={[styles.messagesEntry, border('blue')]}>
+        <TouchableHighlight
+          underlayColor="gray"
+          onPress={this.payBill}
+          >
         <Text>{rowData.payer} owes
         {rowData.username}
         {rowData.total} for 
-
         {rowData.name} due on {rowData.duedate} </Text>
+        </TouchableHighlight>
       </View>
     )
   },
