@@ -3,6 +3,8 @@ var paymentController = require('../controllers/paymentController.js');
 var choreController = require('../controllers/choreController.js');
 var userController = require('../controllers/userController.js');
 var houseController = require('../controllers/houseController.js');
+var tokenController = require('../controllers/tokenController.js');
+var landlordController = require('../controllers/landlordController.js');
 var Auth = require('../auth/Auth.js');
 var passport = require('passport');
 var session = require('express-session');
@@ -34,13 +36,14 @@ module.exports = function(app, express) {
       failureRedirect: '/login' //redirect to login eventually
   }), function(req, res) {
     return req.session.regenerate(function() {
-      console.log("DECODED", jwt.decode(req.user, process.env.secret_code))
       var token = JSON.parse(jwt.decode(req.user, process.env.secret_code));
       req.session.jwt = req.user;
-      if(token.houseId === null) {
+      if(!token.houseId) {
         res.redirect('/registration')
-      } else {
+      } else if (!token.isLandlord) {
         res.redirect('/');
+      } else if (token.isLandlord) {
+        res.redirect('/landlord');
       }
     });
   });
@@ -51,6 +54,7 @@ module.exports = function(app, express) {
   app.get('/users/id/:username', userController.getHouseOfUser);
   app.post('/users', userController.postUser);
   app.put('/users', userController.putUser);
+  app.get('/users/images', userController.getUserImage);
   //app.get('/users/house', userController.checkIfUserHasHouse)
 
   //Messages
@@ -77,37 +81,34 @@ module.exports = function(app, express) {
   app.get('/houses/:token', houseController.getHousebyHouseId);
   app.put('/houses/users', houseController.updateUserHouseId);
   app.get('/houses/token/:houseId', houseController.getHouseToken);
+  app.get('/housez/code', houseController.getHouseCode);
 
+  //Landlord
+  app.get('/properties/owned', landlordController.getHousesOwned);
+  app.get('/properties/view/:houseId', landlordController.updateLandlordsCurrentHouse);
+  app.put('/properties/add/:houseToken', landlordController.addProperty);
+  app.post('/properties/create', houseController.createHouse);
 
-  app.use('/login', express.static('client/login.html'));
+  app.use('/login', express.static('client/login'));
   app.use('/', Auth.checkUser, express.static('client'));
+  app.use('/landlord', Auth.checkUser, express.static('landlordclient'));
   app.use('/registration', Auth.checkUser, express.static('client/registration.html'));
 
   app.get('/obie', function(req, res) {
-    //console.log('IN OBIE', jwt.decode(req.session.jwt, process.env.secret_code))
     res.send(JSON.stringify(req.session.jwt));
   })
+
+
+  app.get('/obie/tokenChange', tokenController.updateToken);
 
   //Login/Logout
   app.get('/logout', function(req, res){
     req.session.destroy(function(){
       res.redirect('/login');
     });
-    console.log("SESSION after logout", req.session)
   });
 
   //Pay a user
   app.post('/auth/venmo/payment', paymentController.makeVenmoPayment);
-
-  //Dummy Test Route
-  app.get('/woo', Auth.checkUser, function(req, res){
-    // console.log("auth", req.isAuthenticated())
-    console.log("SESSION", req.session);
-    res.send(req.session);
-  })
-
-  // app.get('/', Auth.checkUser, function(req, res) {
-  //   console.log('got through auth'); 
-  // })
 }
   

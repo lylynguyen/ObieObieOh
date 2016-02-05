@@ -6,8 +6,28 @@ module.exports = {
     //extract house name from req.body
     var name = req.body.name
     //insert that name into params
-    var params = [name]
+    var address = req.body.address || null;
+    var userId = token.userid;
+    var params = [name, address, userId];
     houseModel.postHouse(params, function(err, results) {
+      if(err) {
+        res.sendStatus(500);
+      } else {
+        res.json(results);
+      }
+    });
+  },
+
+  createHouse: function(req, res) {
+    var token = JSON.parse(jwt.decode(JSON.parse(req.headers.token), process.env.secret_code));
+
+    //extract house name from req.body
+    var name = req.body.name
+    //insert that name into params
+    var address = req.body.address || null;
+    var userId = token.userid;
+    var params = [name, address, userId];
+    houseModel.createHouse(params, function(err, results) {
       if(err) {
         res.sendStatus(500);
       } else {
@@ -23,7 +43,6 @@ module.exports = {
       if(err) {
         res.sendStatus(500);
       } else {
-        console.log('sending back houseId', results);
         res.json(results);
       }
     })
@@ -37,7 +56,6 @@ module.exports = {
     var houseId = req.body.houseId;
     var userId = token.userid;
     var params = [houseId, userId];
-    console.log(params);
     houseModel.updateHouseUserList(params, function(err, results) {
       if(err) {
         res.sendStatus(500);
@@ -56,6 +74,17 @@ module.exports = {
         res.json(results);
       }
     })
-
+  },
+  getHouseCode: function(req, res) {
+    var token = JSON.parse(jwt.decode(JSON.parse(req.headers.token), process.env.secret_code));
+    var params = [token.houseId];
+    console.log(params);
+    houseModel.getHouseToken(params, function(err, results) {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.json(results);
+      }
+    })
   }
 }

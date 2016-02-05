@@ -1,20 +1,22 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- */
+
 'use strict';
 import React, {
   DatePickerIOS,
+  Modal,
   AppRegistry,
   Component,
   StyleSheet,
   Text,
   View,
+  Picker,
   ListView,
   TextInput,
   TouchableHighlight,
-  TouchableOpacity
+  TouchableOpacity,
+  LayoutAnimation
 } from 'react-native';
+
+// import Modal from 'react-native-modal';
 
 import DropDown, {
   Select,
@@ -22,6 +24,7 @@ import DropDown, {
   OptionList,
   updatePosition
 } from 'react-native-dropdown';
+  
 
 import {createStore} from 'redux';
 
@@ -33,6 +36,9 @@ var chores = [
   {category: 'kitchen', name: 'Joey', choreName: 'eat the cheese'}, 
   {category: 'Bathroom', name: 'Justin', choreName: 'buy new stall for HR'}
 ]
+
+var gDate; 
+
 var border = function(color) {
   return {
     borderWidth: 4,
@@ -68,13 +74,24 @@ var App = React.createClass({
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
           <MessageContainer messages={this.state.messages} tabLabel="Messages" />
-          <DatePickerExample messages={this.state.messages} tabLabel="Date Picker" />
+          <DatePickerExample date={this.state.date} tabLabel="Date Picker" />
           <ChoreContainer chores={this.state.chores} tabLabel="Chores" />
         </ScrollableTabView>
       </View>
     )
   }
 });
+
+var CustomLayoutAnimation = {
+    duration: 200,
+    create: {
+      type: LayoutAnimation.Types.linear,
+      property: LayoutAnimation.Properties.opacity,
+    },
+    update: {
+      type: LayoutAnimation.Types.curveEaseInEaseOut,
+    },
+  };
 
 var Form = React.createClass({
   getInitialState: function() {
@@ -184,6 +201,7 @@ var DatePickerExample = React.createClass({
 
   onDateChange: function(date) {
     this.setState({date: date});
+    gDate = this.state.date;  
   },
 
   onTimezoneChange: function(event) {
@@ -197,6 +215,7 @@ var DatePickerExample = React.createClass({
   render: function() {
     // Ideally, the timezone input would be a picker rather than a
     // text input, but we don't have any pickers yet :(
+    console.log('TIMEZONE Date', this.state.date);
     return (
       <View>
         <DatePickerIOS
@@ -204,6 +223,8 @@ var DatePickerExample = React.createClass({
           mode="datetime"
           timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
           onDateChange={this.onDateChange}
+          minuteInterval={30}
+
         />
       </View>
     );
@@ -237,14 +258,116 @@ var Heading = React.createClass({
   }
 });
 
+
+
 var ChoreForm = React.createClass({
   getInitialState: function() {
     return {
-      text: 'hola'
+      text: 'hola',
+      chores: chores,
+      user: '',
+      category: '',
+      showStatus: false,
+      showDate: false, 
+      date: ''
     }
   },
+
+  componentDidMount: function () {
+    updatePosition(this.refs['SELECT1']);
+    updatePosition(this.refs['SELECT2']);
+    updatePosition(this.refs['OPTIONLIST']);
+  },
+
+  _getOptionList: function() {
+    return this.refs['OPTIONLIST'];
+  },
+
+  category: function(category) {
+    this.setState({category: category});
+  },
+
+  user: function(user) {
+    this.setState({user: user});
+  },
+
+  renderDrops: function() {
+    return (
+      <View>
+          <Select
+            width= {100}
+            ref="SELECT1"
+            optionListRef={this._getOptionList.bind(this)}
+            defaultValue="User"
+            onSelect={this.user.bind(this)}>
+            <Option>Joey</Option>
+            <Option>Lyly</Option>
+            <Option>Nick</Option>
+            <Option>Justin</Option>
+          </Select>
+
+          <OptionList ref="OPTIONLIST"/>
+      </View>
+    )
+  },
+
+  renderCategories: function() {
+    return (
+      <View>
+          <Select
+            style={{backgroundColor: 'red'}}
+            width={100}
+            ref="SELECT2"
+            optionListRef={this._getOptionList.bind(this)}
+            defaultValue="Category"
+            onSelect={this.category.bind(this)}>
+            <option>Kitchen</option>
+            <option>Bathroom</option>
+            <option>Livingroom</option>
+            <option>Bedroom</option>
+            <option>Yard</option>
+            <option>Laundry</option>
+            <option>Other</option>
+          </Select>
+
+          <OptionList ref="OPTIONLIST"/>
+      </View>
+    );
+  }, 
+
+   renderDate: function() {
+    if(this.state.showDate) {
+      return <DatePickerExample />
+    }
+  },
+
+  toggleDate: function () {
+    this.setState({showDate: !this.state.showDate})
+    // LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+  },
+
+  setDateButton: function() {
+    //var showStyle = this.state.showStatus === true ? {backgroundColor: 'red', width: 50} : {backgroundColor: 'green', width: 100};
+    console.log('DATE STATUS', this.state.showDate); 
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.toggleDate}
+      style={[styles.setDateButton, styles.dropdown]}
+      >
+      <Text>
+        Set Date
+      </Text>
+    </TouchableHighlight>
+  },
+
   addChore: function() {
-    var choreObject = {name: 'Joey', choreName: this.state.text}
+    console.log('GDATE', typeof gDate);
+    var choreObject = {
+      name: this.state.user,
+      choreName: this.state.text, 
+      date: gDate.toString().split(' ').slice(0, 4).join(' '),
+      completed: false
+    }
     this.props.sendChore(choreObject);
   },
   sendChoreButton: function() {
@@ -260,18 +383,26 @@ var ChoreForm = React.createClass({
   },
   
   render: function() {
+    console.log('THIS PROPS', this.props);
     return (
-      <View style={[styles.formTest, border('blue')]}>
-        <TextInput
-          onChangeText={(text) => this.setState({text})}
-          value={this.state.text}
-          rejectResponderTermination={false}
-          style={styles.textInput}
-        />
+      <View>
+        {this.renderDate()}
+        <View style={styles.dropdown}>
+          {this.renderDrops()}
+          {this.renderCategories()}
+          {this.setDateButton()}
+        </View>
+        <View style={[styles.formTest, border('blue')]}>
+          <TextInput
+            onChangeText={(text) => this.setState({text})}
+            value={this.state.text}
+            rejectResponderTermination={false}
+            style={styles.textInput}/>
         <View style={[styles.buttonContainer, border('red')]}>
           {this.sendChoreButton()}
         </View>
       </View>
+    </View>
     )
   }
 });
@@ -287,116 +418,49 @@ var ChoreContainer = React.createClass({
     };
   },
 
-  renderDate: function() {
-    return <DatePickerExample />
-  },
-
-  setDateButton: function() {
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.renderDate}
-      style={[styles.setDateButton]}
-      >
-      <Text>
-        Set Date
-      </Text>
-    </TouchableHighlight>
-  },
-
-  componentDidMount() {
-    updatePosition(this.refs['SELECT1']);
-    updatePosition(this.refs['OPTIONLIST']);
-    updatePosition(this.refs['SELECT2']);
-    updatePosition(this.refs['CATEGORYLIST']);
-  },
-
-  _getOptionList() {
-    return this.refs['OPTIONLIST'];
-  },
-
-  _getOptionList2() {
-    return this.refs['CATEGORYLIST'];
-  },
-
-
-  _user(user) {
-    this.setState({
-      ...this.state,
-      user: user
-    });
-  },
-
-   _category(category) {
-    this.setState({
-      category: category
-    });
-  },
-
-  sendChore: function(choreObj) {
+ 
+   sendChore: function(choreObj) {
     this.state.chores.push(choreObj);
     this.setState({
       dataSource: this.state.dataSource.cloneWithRows(this.state.chores),
       chores: this.state.chores
     })
   },
-  renderChoreEntry: function(rowData) {
-    return (
-      <View style={[styles.messageEntry, border('black')]}>
-        <Text>
-          Name: {rowData.name}
-        </Text>
-        <Text>
-          Chore: {rowData.choreName}
-        </Text>
-        <Text>
-          Category: {rowData.category}
-        </Text>
-      </View>
-    )
+
+  completeChore: function() {
+    
   },
+
   render: function() {
-    console.log('REFS', this.refs); 
+    console.log('REFS', this.state); 
     return (
       <View style={[styles.messageContainer, border('red')]}>
         <Text style={styles.viewTitle}>Chores</Text>
         <ListView
           dataSource={this.state.dataSource}
-          renderRow={this.renderChoreEntry}
+          renderRow={(rowData) => (
+            <View style={[styles.choreEntry, border('black')]}>
+              <View>
+                <Text>
+                  Name: {rowData.name}
+                </Text>
+                <Text>
+                  Chore: {rowData.choreName}
+                </Text>
+                <Text>
+                  Date: {rowData.date}
+                </Text>
+              </View>
+              <View>
+                <Text 
+                style={{alignItems: 'stretch', backgroundColor: 'green'}}
+                onPress={this.completeChore}>
+                  Done?
+                </Text>
+              </View>
+            </View>
+          )}
         />
-        <View style={[styles.overlay, {flexDirection: 'column', flex: .33}]}>
-          <Select
-            width={100}
-            ref="SELECT1"
-            optionListRef={this._getOptionList.bind(this)}
-            defaultValue="Select User"
-            onSelect={this._user.bind(this)}
-            style={[styles.overlay]}>
-            <Option>Joey</Option>
-            <Option>Justin</Option>
-            <Option>Lyly</Option>
-            <Option>Nick</Option>
-          </Select>
-          <OptionList ref="OPTIONLIST"/>
-        </View>
-        <View style={[styles.overlay, {flexDirection: 'column', flex: .33}]}>
-          <Select
-            width={100}
-            ref="SELECT2"
-            optionListRef={this._getOptionList2.bind(this)}
-            defaultValue="Select Area"
-            onSelect={this._category.bind(this)}
-            style={[styles.overlay]}>
-            <Option>Kitchen</Option>
-            <Option>Bathroom</Option>
-            <Option>Bedroom</Option>
-            <Option>Yard</Option>
-            <Option>Other</Option>
-            <Option>Living Room</Option>
-            <Option>Laundry Room</Option>
-          </Select>
-          <OptionList ref="CATEGORYLIST"/>
-        </View>
-        {this.setDateButton()}
         <ChoreForm sendChore={this.sendChore} />
       </View>
     )
@@ -724,11 +788,9 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   setDateButton: {
-    borderWidth: 2,
-    borderColor: '#00CC00',
-    borderRadius: 10,
-    flex: .1,
+    borderWidth: .5,
     width: 100,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -742,6 +804,20 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 5,
   },
+  dropdown: {
+    flexDirection:'row'
+  },
+  floatView: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    top: 200,
+    left: 40,
+    backgroundColor: 'green',
+  },
+  choreEntry: {
+    flexDirection: 'row'
+  }
 });
 
 /*

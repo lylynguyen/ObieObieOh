@@ -16,7 +16,6 @@ module.exports.checkHouse = function(req, res, next) {
 
 module.exports.checkUser = function(req, res, next){
   if (!isLoggedIn(req)) {
-    console.log(":(");
     res.redirect('/login');
   } else {
     next();
