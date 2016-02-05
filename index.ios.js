@@ -38,6 +38,8 @@ var chores = [
 ]
 
 var gDate; 
+var gUser;
+var gCategory;
 
 var showChores = true; 
 
@@ -223,14 +225,21 @@ var DatePickerExample = React.createClass({
     console.log('TIMEZONE Date', this.state.date);
     return (
       <View>
-        <DatePickerIOS
-          date={this.state.date}
-          mode="datetime"
-          timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
-          onDateChange={this.onDateChange}
-          minuteInterval={30}
-
-        />
+        <View>
+          <DatePickerIOS
+            date={this.state.date}
+            mode="datetime"
+            timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
+            onDateChange={this.onDateChange}
+            minuteInterval={30}
+            style={[{height: 320}]}
+          />
+        </View>
+        <View 
+          style={{justifyContent: 'flex-end', alignItems: 'center', marginBottom: 30}}
+          >
+          <Text onPress={this.props.toggleClose}>Close</Text>
+        </View>
       </View>
     );
   },
@@ -270,6 +279,9 @@ var UserDrop = React.createClass({
     };
   },
 
+  test: function() {
+    console.log(this);
+  },
   componentDidMount: function() {
     updatePosition(this.refs['SELECT1']);
     updatePosition(this.refs['OPTIONLIST']);
@@ -283,25 +295,33 @@ var UserDrop = React.createClass({
     this.setState({
       user: user
     });
+    gUser = user; 
   },
 
   render: function() {
     return (
-      <View style={{ flex: 3, justifyContent: 'center', alignItems: 'center' }}>
-        <Select
-          width={250}
-          ref="SELECT1"
-          optionListRef={this._getOptionList.bind(this)}
-          defaultValue="Select a User"
-          onSelect={this.user.bind(this)}>
-          <Option>Joey</Option>
-          <Option>Lyly</Option>
-          <Option>Nick</Option>
-          <Option>Justin</Option>
-        </Select>
-        <View style={{ height: 10 }}/>
-        <Text>Selected User: {this.state.user}</Text>
-        <OptionList ref="OPTIONLIST"/>
+      <View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 320}}>
+          <Select
+            width={250}
+            ref="SELECT1"
+            optionListRef={this._getOptionList.bind(this)}
+            defaultValue="Select a User"
+            onSelect={this.user.bind(this)}>
+            <Option>Joey</Option>
+            <Option>Lyly</Option>
+            <Option>Nick</Option>
+            <Option>Justin</Option>
+          </Select>
+          <View style={{ height: 10 }}/>
+          <Text>Selected User: {this.state.user}</Text>
+          <OptionList ref="OPTIONLIST"/>
+        </View>
+        <View 
+          style={{justifyContent: 'flex-end', alignItems: 'center', marginBottom: 30}}
+          >
+          <Text onPress={this.props.toggleClose}>Close</Text>
+        </View>
       </View>
     )
   }
@@ -328,27 +348,35 @@ var CategoryDrop = React.createClass({
     this.setState({
       category: category
     });
+    gCategory = category
   }, 
 
   render: function() {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Select
-          width={250}
-          ref="SELECT2"
-          optionListRef={this._getOptionList.bind(this)}
-          defaultValue="Select a Category"
-          onSelect={this.category.bind(this)}>
-          <option>Kitchen</option>
-          <option>Bathroom</option>
-          <option>Livingroom</option>
-          <option>Bedroom</option>
-          <option>Laundry</option>
-          <option>Yard</option>
-        </Select>
-        <View style={{ height: 20 }}></View>
-        <Text>Selected Category: {this.state.category}</Text>
-        <OptionList ref="OPTIONLIST"/>
+      <View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 320 }}>
+          <Select
+            width={250}
+            ref="SELECT2"
+            optionListRef={this._getOptionList.bind(this)}
+            defaultValue="Select a Category"
+            onSelect={this.category.bind(this)}>
+            <option>Kitchen</option>
+            <option>Bathroom</option>
+            <option>Livingroom</option>
+            <option>Bedroom</option>
+            <option>Laundry</option>
+            <option>Yard</option>
+          </Select>
+          <View style={{ height: 20 }}></View>
+          <Text>Selected Category: {this.state.category}</Text>
+          <OptionList ref="OPTIONLIST"/>
+        </View>
+        <View 
+          style={{justifyContent: 'flex-end', alignItems: 'center', marginBottom: 30}}
+          >
+          <Text onPress={this.props.toggleClose}>Close</Text>
+        </View>
       </View>
     );
   }
@@ -367,44 +395,67 @@ var ChoreForm = React.createClass({
       showDate: false, 
       showUser: false,
       showCategory: false,
+      showClose: false,
       date: ''
     }
   },
 
   renderDate: function() {
     if(this.state.showDate) {
-      return <DatePickerExample />
+      return <DatePickerExample toggleClose={this.toggleClose}/>
     }
   },
 
   renderUser: function() {
     if(this.state.showUser) {
-      return <UserDrop />
+      return <UserDrop toggleClose={this.toggleClose}/>
     }
   },
 
   renderCategory: function() {
     if(this.state.showCategory) {
-      return <CategoryDrop />
+      return <CategoryDrop toggleClose={this.toggleClose}/>
     }
   },
 
+  // renderClose: function() {
+  //   if(this.state.showClose) {
+  //     return 
+  //     <View style={{justifyContent: 'flex-end', alignItems: 'center', marginBottom: 30}}>
+  //       <TouchableHighlight onPress={this.toggleClose}>Close</TouchableHighlight>
+  //     </View>
+  //   }
+  // },
+
   toggleDate: function () {
-    showChores = !showChores;
+    // this.setState({showClose: true})
     this.setState({showDate: !this.state.showDate})
     // LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
   },
 
    toggleUser: function () {
-    showChores = !showChores;
+    // this.setState({showClose: true})
     this.setState({showUser: !this.state.showUser})
     // LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
   },
 
    toggleCategory: function () {
-    showChores = !showChores;
+    // this.setState({showClose: true})
     this.setState({showCategory: !this.state.showCategory})
     // LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+  },
+
+  toggleClose: function() {
+    console.log('USER DROP STATUS', this.state.showUser)
+    if(this.state.showUser) {
+      ('CORRECT CASE');
+      this.setState({showUser: !this.state.showUser})
+    } else if (this.state.showCategory) {
+      this.setState({showCategory: !this.state.showCategory})
+    } else if (this.state.showDate) {
+      this.setState({showDate: !this.state.showDate})
+    }
+    // this.setState({showClose: false})
   },
 
   setDateButton: function() {
@@ -448,7 +499,8 @@ var ChoreForm = React.createClass({
   addChore: function() {
     console.log('GDATE', typeof gDate);
     var choreObject = {
-      name: this.state.user,
+      name: gUser,
+      category: gCategory,
       choreName: this.state.text, 
       date: gDate.toString().split(' ').slice(0, 4).join(' '),
       completed: false
@@ -501,7 +553,8 @@ var ChoreContainer = React.createClass({
       chores: chores,
       dataSource: ds.cloneWithRows(chores),
       user: '',
-      category: ''
+      category: '',
+      showForm: false
     };
   },
 
@@ -514,10 +567,19 @@ var ChoreContainer = React.createClass({
     })
   },
 
-  renderChores: function() {
-    if(showChores) {
-      return (
-        <View>
+  toggleForm: function() {
+    this.setState({showForm: !this.state.showForm});
+  },
+
+  renderForm: function() {
+    if(this.state.showForm) {
+      return <ChoreForm sendChore={this.sendChore}/>
+    }
+  },
+
+  render: function() {
+    return (
+        <View style={[styles.messageContainer, border('red')]}>
           <Text style={styles.viewTitle}>Chores</Text>
           <ListView
             dataSource={this.state.dataSource}
@@ -533,10 +595,12 @@ var ChoreContainer = React.createClass({
                   <Text>
                     Date: {rowData.date}
                   </Text>
+                  <Text>
+                    Category: {rowData.category}
+                  </Text>
                 </View>
-                <View>
+                <View style={{alignItems: 'center'}}>
                   <Text 
-                  style={{alignItems: 'stretch', backgroundColor: 'green'}}
                   onPress={this.completeChore}>
                     Done?
                   </Text>
@@ -544,18 +608,12 @@ var ChoreContainer = React.createClass({
               </View>
             )}
           />
+          <View style={{alignItems: 'center', marginBottom: 10}} >
+            <Text onPress={this.toggleForm}>Toggle Chore Form</Text>
+          </View>
+          {this.renderForm()}
         </View>
       )
-    }
-  }, 
-
-  render: function() {
-    return (
-      <View style={[styles.messageContainer, border('red')]}>
-        {this.renderChores()}
-        <ChoreForm sendChore={this.sendChore} />
-      </View>
-    )
   }
 });
 
@@ -873,15 +931,14 @@ const styles = StyleSheet.create({
   },
   sendMessageButton: {
     borderWidth: 2,
-    borderColor: '#00CC00',
-    borderRadius: 10,
+    borderColor: 'black',
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
   },
   setDateButton: {
     borderWidth: .5,
-    width: 100,
+    width: 101,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center'
@@ -898,8 +955,7 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     flexDirection:'row',
-    borderColor: '#00CC00',
-    borderRadius: 10,
+    borderColor: 'black',
     borderWidth: 1
   },
   floatView: {
