@@ -21,6 +21,7 @@
     "passport": "^0.3.2",
     "passport-venmo": "0.0.1",
     "react-native": "^0.18.1",
+    "react-native-form": "^1.0.6",
     "react-native-scrollable-tab-view": "^0.3.5",
     "request": "^2.67.0",
     "socket.io": "^1.4.5"

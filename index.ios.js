@@ -11,9 +11,14 @@ import React, {
   View,
   ListView,
   TextInput,
-  TouchableHighlight
+  TouchableHighlight,
+  Switch,
+  SliderIOS,
+  PickerIOS,
+  DatePickerIOS,
 } from 'react-native';
 
+var Form = require('react-native-form')
 
 var ScrollableTabView = require('react-native-scrollable-tab-view');
 
@@ -38,7 +43,8 @@ var App = React.createClass({
   getInitialState: function() {
     return {
       messages: messages,
-      finance: finance
+      finance: finance,
+      bills: bills
     }
   },
   render: function() {
@@ -49,15 +55,15 @@ var App = React.createClass({
         <ScrollableTabView>
           <MessageContainer messages={this.state.messages} tabLabel="Messages" />
           <FinanceContainer finance={this.state.finance} tabLabel="Finance" />
-          <PaymentAndBillsContainer bill={this.state.bill} tabLabel="Pay/Bill"/>
-
         </ScrollableTabView>
       </View>
     )
   }
 });
 
-var Form = React.createClass({
+//<BillContainer bills={this.state.bills} tabLabel="Create Bill"/>
+
+var MessageForm = React.createClass({
   getInitialState: function() {
     return {
       text: ''
@@ -132,59 +138,159 @@ var MessageContainer = React.createClass({
           dataSource={this.state.dataSource}
           renderRow={this.renderMessageEntry}
         />
-        <Form sendMessage={this.sendMessage} />
+        <MessageForm sendMessage={this.sendMessage} />
       </View>
     )
   }
 });
 
-// var MessageEntry = React.createClass({
-//   render: function() {
-//     return (
-//       <View style={styles.messageEntry}>
-//         <Text>{this.props.user}</Text>
-//         <Text>{this.props.text}</Text>
-//       </View>
-//     )
-//   }
-// });
+var BillContainer = React.createClass({
+  getInitialState: function() {
+    return{
 
-var PaymentAndBillsContainer = React.createClass({
-  addPayee: function() {
-    var payeeObject = {payee:this.state.payee, payer: this.state.payer,date:this.state.date, phonenumber:this.state.phonenumber};
-      this.props.sendBill(billPaymentObject);
+      username: '',
+      name: '',
+      payer: '',
+      total: '',
+      duedate: '2016-03-16',
+      datepaid: ''
+    }
   },
 
-  renderPaymentAndBill: function() {
+  addBill: function() {
+    var billObject = {username: this.state.username, payer: this.state.payer, total: this.state.total, name: this.state.name, duedate: this.state.duedate, datepaid: null};
+    this.props.sendBill(billObject);
+  },
+
+   sendBillButton: function() {
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.addBill}
+      style={[styles.sendMessageButton]}
+      >
+      <Text>
+        Send Bill
+      </Text>
+    </TouchableHighlight>
+  },
+
+  render: function() {
     return  (
-      <View>
+      <View style={[styles.formTest, border('blue')]}>
+        <Form ref="form">
+        <TextInput name="username" placeholder="Name, email, phone number"
+        keyboardType='default'
+        style={{height: 40, paddingLeft: 10, textAlign: 'justify'}}/>
+      </Form>
+         <Text>Bill: </Text>
         <TextInput
-          placeholder="Name, email, phone number"
-          // rejectResponderTermination={false}
-           style={{height: 40, paddingLeft: 10, textAlign: 'justify'}}
+          onChangeText={(name) => this.setState({name})}
+          value={this.state.name}
+          style={styles.textInput}
+        />
+         <Text>Payer: </Text>
+        <TextInput
+          onChangeText={(payer) => this.setState({payer})}
+          value={this.state.payer}
+          style={styles.textInput}
+        />
+        <Text>Total: </Text>
+        <TextInput
+          onChangeText={(total) => this.setState({total})}
+          value={this.state.total}
+          style={styles.textInput}
+        />
+        <Text>Payer: </Text>
+        <TextInput
+          onChangeText={(duedate) => this.setState({duedate})}
+          value={this.state.duedate}
+          style={styles.textInput}
+        />
+        <View style={[styles.buttonContainer, border('red')]}>
+          {this.sendBillButton()}
+        </View>
+      </View>
+    )
+  },
+});
+
+var BillEntry = React.createClass({
+  getInitialState: function() {
+    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    return {
+      bills: bills,
+      dataSource: ds.cloneWithRows(bills)
+    };
+  },
+  sendBill: function(billObj) {
+    this.state.bills.push(billObj);
+    this.setState({
+      dataSource:this.state.dataSource.cloneWithRows(this.state.bills),
+      bills: this.state.bills
+    })
+  },
+
+  renderBillEntry: function(rowData) {
+    return (
+      <View style={[styles.messagesEntry, border('blue')]}>
+        <TouchableHighlight
+          underlayColor="gray"
+          onPress={this.payBill}
+          >
+        <Text>{rowData.payer} owes
+        {rowData.username}
+        {rowData.total} for
+        {rowData.name} due on {rowData.duedate} </Text>
+        </TouchableHighlight>
+      </View>
+    )
+  },
+
+  render: function() {
+    return (
+      <View style={[styles.messageEntry, border('black')]}>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={this.renderBillEntry}
         />
       </View>
     )
+  }
+  //need to move the submit/send bill function to pay/request container
+})
+
+var FinanceContainer = React.createClass({
+    getInitialState: function() {
+    return{
+      username: '',
+      name: '',
+      payer: '',
+      total: '',
+      duedate: '2016-03-16',
+      datepaid: ''
+    }
+  },
+
+  addBill: function() {
+    var billObject = {username: this.state.username, payer: this.state.payer, total: this.state.total, name: this.state.name, duedate: this.state.duedate, datepaid: null};
+    this.props.sendBill(billObject);
+  },
+
+   sendBillButton: function() {
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.addBill}
+      style={[styles.sendMessageButton]}
+      >
+      <Text>
+        Send Bill
+      </Text>
+    </TouchableHighlight>
   },
 
   render: function() {
     return (
-    <View>
-      <View style={[styles.formTest]}>
-      <Text style={styles.viewTitle}>Pay or Request</Text>
-      </View>
-      <View style={styles.messageEntry}>
-          {this.renderPaymentAndBill()}
-        </View>
-    </View>
-    )
-  }
-});
-
-var FinanceContainer = React.createClass({
-  render: function() {
-    return (
-      <View style ={[styles.messageEntry, border('black')]}>
+      <View style ={[styles.messageContainer, border('black')]}>
         <Text style={styles.viewTitle}> Bills</Text>
         <View>
           <BillEntry />
@@ -193,34 +299,40 @@ var FinanceContainer = React.createClass({
         <View>
           <PaymentOwedEntry />
         </View>
+
         <View>
-        <Text style={styles.viewTitle}> Bill History</Text>
-          <BillHistory />
+         <Text>Bill:</Text>
+        <TextInput
+          onChangeText={(name) => this.setState({name})}
+          value={this.state.name}
+          style={styles.textInput}
+        />
+         <Text>Payer: </Text>
+        <TextInput
+          onChangeText={(payer) => this.setState({payer})}
+          value={this.state.payer}
+          style={styles.textInput}
+        />
+        <Text>Total: </Text>
+        <TextInput
+          onChangeText={(total) => this.setState({total})}
+          value={this.state.total}
+          style={styles.textInput}
+        />
+        <Text>Payer: </Text>
+        <TextInput
+          onChangeText={(duedate) => this.setState({duedate})}
+          value={this.state.duedate}
+          style={styles.textInput}
+        />
+        <View style={[styles.buttonContainer, border('red')]}>
+          {this.sendBillButton()}
+        </View>
         </View>
       </View>
     )
   }
 });
-
-var BillHistory = React.createClass({
-  getInitialState: function () {
-  var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-  return {
-    billHistory: billHistory,
-    dataSource: ds.cloneWithRows(billHistory)
-    };
-  },
-  render: function() {
-    return (
-     <View style={[styles.messagesEntry, border('blue')]}>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={(rowData) => <Text>{rowData.total}{rowData.name}{rowData.datepaid}</Text>}
-        />
-      </View>
-    )
-  }
-})
 
 var PaymentOwedEntry = React.createClass({
   getInitialState: function() {
@@ -244,49 +356,6 @@ var PaymentOwedEntry = React.createClass({
 
 var payBill; //function to pay 
 
-var BillEntry = React.createClass({
-  getInitialState: function() {
-    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-    return {
-      bills: bills,
-      dataSource: ds.cloneWithRows(bills)
-    };
-  },
-  sendBill: function(billObj) {
-    this.state.bills.push(billObj);
-    this.setState({
-      dataSource:this.state.dataSource.cloneWithRows(this.state.bills),
-      bills: this.state.bills
-    })
-  },
-  renderBillEntry: function(rowData) {
-    return (
-      <View style={[styles.messagesEntry, border('blue')]}>
-        <TouchableHighlight
-          underlayColor="gray"
-          onPress={this.payBill}
-          >
-        <Text>{rowData.payer} owes
-        {rowData.username}
-        {rowData.total} for 
-        {rowData.name} due on {rowData.duedate} </Text>
-        </TouchableHighlight>
-      </View>
-    )
-  },
-
-  render: function() {
-    return (
-      <View style={[styles.messageEntry, border('black')]}>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={this.renderBillEntry}
-        />
-      </View>
-    )
-  }
-  //need to move the submit/send bill function to pay/request container
-})
 
 
 const styles = StyleSheet.create({
@@ -295,7 +364,7 @@ const styles = StyleSheet.create({
     paddingTop: 25,
     justifyContent: 'center',
     alignItems: 'stretch',
-    backgroundColor: '#98DDDE',
+    backgroundColor: 'white',
 
   },
   navbar: {
@@ -311,7 +380,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     backgroundColor: '#F5FCFF',
   },
-  form: {
+  messageform: {
     flex: 3,
     justifyContent: 'center',
     alignItems: 'stretch',
