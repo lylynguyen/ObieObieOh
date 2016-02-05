@@ -46,6 +46,77 @@ var border = function(color) {
   }
 }
 
+var DropDowns = React.createClass({
+  getInitialState: function() {
+    return {
+      canada: '',
+      usa: ''
+    };
+  },
+
+  componentDidMount: function() {
+    updatePosition(this.refs['SELECT1']);
+    updatePosition(this.refs['SELECT2']);
+    updatePosition(this.refs['OPTIONLIST']);
+  }, 
+
+  _getOptionList: function() {
+    return this.refs['OPTIONLIST'];
+  }, 
+
+  _usa: function(state) {
+    this.setState({
+      usa: state
+    });
+  }, 
+
+  _canada: function(province) {
+    this.setState({
+      canada: province
+    });
+  },
+
+  render: function() {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Select
+            width={250}
+            ref="SELECT1"
+            optionListRef={this._getOptionList.bind(this)}
+            defaultValue="Select a Province in Canada ..."
+            onSelect={this._canada.bind(this)}>
+            <Option>Alberta</Option>
+            <Option>British Columbia</Option>
+          </Select>
+
+          <View style={{ height: 10 }}/>
+
+          <Select
+            width={250}
+            ref="SELECT2"
+            optionListRef={this._getOptionList.bind(this)}
+            defaultValue="Select a State in USA ..."
+            onSelect={this._usa.bind(this)}>
+            <option>Alabama</option>
+            <option>Alaska</option>
+            <option>Arizona</option>
+            <option>Arkansas</option>
+            <option>California</option>
+            <option>Colorado</option>
+          </Select>
+
+          <View style={{ height: 20 }}></View>
+
+          <Text>Selected Canada's province: {this.state.canada}</Text>
+          <Text>Selected USA's state: {this.state.usa}</Text>
+
+          <OptionList ref="OPTIONLIST"/>
+      </View>
+    );
+  }
+});
+
+
 var App = React.createClass({
   getInitialState: function() {
     return {
@@ -337,7 +408,7 @@ var ChoreForm = React.createClass({
 
    renderDate: function() {
     if(this.state.showDate) {
-      return <DatePickerExample />
+      return <DropDowns />
     }
   },
 
