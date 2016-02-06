@@ -1,3 +1,4 @@
+/////////////////////// DEPENDENCIES //////////////////////////
 
 'use strict';
 import React, {
@@ -30,6 +31,8 @@ import DropDown, {
 
 import {createStore} from 'redux';
 
+////////////////// DUMMY GLOBAL VARS //////////////////////////
+
 var ScrollableTabView = require('react-native-scrollable-tab-view');
 
 var messages = [{name: "Lyly", text: "a;lshee hksehkahfj askhfakjse ashkjehakjes afeksjfhk esksjks jfhskfe"},{name: "Boner", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Joey", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Nick", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."}]
@@ -54,31 +57,142 @@ var border = function(color) {
   }
 }
 
+////////////////////// APP (main.js) /////////////////////////
+
+/* NOTES
+need to be able to have a place where we can toggle
+house code to show, func from web app below:
+
+toggleHouseCode: function () {
+  $('.toggle-house-code').toggle('slow');
+},
+
+mobile not really set up to render house name / roster
+anywhere so can consider adding this in maybe above the nav?
+
+need to consider the side bar as a whole, where will house
+roster/landlord views/user image/house code appear?
+*/
+
 var App = React.createClass({
   getInitialState: function() {
-    this.test()
     return {
+      //eventually should all be replaced by empty arrs,
+      //they will be overwritten by fetch calls 
       chores: chores,
       messages: messages,
-      users: users
+      users: users,
+      //below brough in from web App component
+      view: 'Finances',
+      houseCode: '',
+      houseName: '',
+      isLandlord: false,
+      initialLoad: true,
+      landlordHouses: []
     }
   },
 
-  test: function() {
-    fetch(process.env.Base_URL + '/dummy', {
+  //call to get the session
+  componentDidMount: function() {
+    this.getSession();
+  },
+
+  getUsers: function() {
+    fetch(process.env.Base_URL + '/', {
       method: 'GET',
       headers: {
-        //at some point will need to set token on AsynchSt.
-        //which acts just as local storage did. Async Storage
-        //is promisified, but don't think we need here b/c 
-        //we're only retrieving the value
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
       }
     })
-    .then(function(res) {
+    .then(function(users) {
       //update state users array with response
-      console.log('got here', res); 
+      this.setState({users: users});
+    })
+  },
+
+  getUserImage: function() {
+    fetch(process.env.Base_URL + '/users/images', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(url) {
+      this.state.imageUrl = url[0].userImageUrl || "https://s-media-cache-ak0.pinimg.com/736x/fb/e1/cd/fbe1cdbc1b728fbb5e157375905d576f.jpg";
+      this.state.name = url[0].name;
+      this.setState({imageUrl: this.state.imageUrl, name: this.state.name});
+    })
+  },
+
+  getSession: function() {
+    AsyncStorage.removeItem('obie')
+    fetch(process.env.Base_URL + '/obie/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(function(session) {
+      //asyncstorage is promisified
+      AsyncStorage.setItem('obie', session)
+        .then(function() {
+          this.getUserImage();
+          this.getHouseCode();
+          this.getUsers();
+        })
+    })
+  },
+
+  getHouseCode: function() {
+    fetch(process.env.Base_URL + '/housez/code', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(code) {
+      this.setState({houseCode: code[0].token});
+      this.setState({houseName: code[0].name});
+    })
+  },
+
+  leaveHouse: function() {
+    fetch(process.env.Base_URL + '/users/leave', {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(code) {
+      AsyncStorage.removeItem('obie')
+      .then(function() {
+        //may need to be adjusted, not sure exactly what 
+        //this does. 
+        window.location.href="/registration";
+      });
+    })
+  },
+
+  updateTokenAfterLeaveHouse: function() {
+     fetch(process.env.Base_URL + '/obie/updateLeaveHouse', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(token) {
+      AsyncStorage.setItem('obie', token);
     })
   },
 
@@ -97,46 +211,7 @@ var App = React.createClass({
   }
 });
 
-var Form = React.createClass({
-  getInitialState: function() {
-    return {
-      text: 'hi'
-    }
-  },
-
-  addMessage: function() {
-    var messageObject = {name: 'Justin', text: this.state.text}
-    this.props.sendMessage(messageObject);
-  },
-
-  sendMessageButton: function() {
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.addMessage}
-      style={[styles.sendMessageButton]}
-      >
-      <Text>
-        Send Message
-      </Text>
-    </TouchableHighlight>
-  },
-
-  render: function() {
-    return (
-      <View style={[styles.formTest, border('blue')]}>
-        <TextInput
-          onChangeText={(text) => this.setState({text})}
-          value={this.state.text}
-          rejectResponderTermination={false}
-          style={styles.textInput}
-        />
-        <View style={[styles.buttonContainer, border('red')]}>
-          {this.sendMessageButton()}
-        </View>
-      </View>
-    )
-  }
-});
+/////////////////// NAVBAR /////////////////////////////////
 
 var Navbar = React.createClass({
   render: function() {
@@ -146,10 +221,30 @@ var Navbar = React.createClass({
       </View>
     )
   }
-})
+});
+
+//////////////////// MESSAGES //////////////////////////
+
+/*NOTES
+
+messages dummy data will be replaced with actual db mess.
+when hooked up to the back end. Have messages array abv,
+and the state will be overwritten below upon loadmessages
+in getInitialState
+
+think about adding date to message entries
+
+when a user submits a message, the user right now is hard
+coded in to be "justin" but it should be the userId pulled
+from the token 
+
+clear user input text field on message submission 
+*/ 
 
 var MessageContainer = React.createClass({
   getInitialState: function() {
+    //load messages upon loading
+    setTimeout(this.loadMessages, 500);
     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
       messages: messages,
@@ -157,6 +252,45 @@ var MessageContainer = React.createClass({
     };
   },
 
+  componentDidMount: function () {
+    //loads messages, taken from web app message container
+    var context=this;
+    //socket.on('message', context.loadMessages);
+  },
+
+  loadMessages: function() {
+    console.log('LOADING MESSAGES'); 
+    fetch(process.env.Base_URL + '/messages', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(messages) {
+      this.setState({messages: messages});
+    })
+  },
+
+  submitMessage: function(message) {
+    console.log('SUBMITTING MESSAGE'); 
+    fetch(process.env.Base_URL + '/messages', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      },
+      body: JSON.stringify(message)
+    })
+    .then(function(messages) {
+      this.setState({messages: messages});
+    })
+  },
+
+  //need to remove when back end is hooked up. this is just
+  //to update the dummy array. 
   sendMessage: function(messageObj) {
     this.state.messages.push(messageObj);
     this.setState({
@@ -165,6 +299,7 @@ var MessageContainer = React.createClass({
     })
   },
 
+  //consider adding date to the message entry 
   renderMessageEntry: function(rowData) {
     return (
       <View style={[styles.messageEntry, border('black')]}>
@@ -186,12 +321,93 @@ var MessageContainer = React.createClass({
           dataSource={this.state.dataSource}
           renderRow={this.renderMessageEntry}
         />
-        <Form sendMessage={this.sendMessage} />
+        <MessageForm submitMessage={this.submitMessage} />
       </View>
     )
   }
 });
 
+var MessageForm = React.createClass({
+  getInitialState: function() {
+    return {
+      text: 'hi'
+    }
+  },
+
+  addMessage: function() {
+    var messageObject = {
+      //eventually need to replace with userId from token
+      name: 'Justin', 
+      //this is good, updated by user input
+      text: this.state.text
+    }
+    this.props.submitMessage(messageObject);
+    //need to consider how to clear user input field text
+    //after submission 
+  },
+
+  sendMessageButton: function() {
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.addMessage}
+      style={[styles.sendMessageButton]}
+      >
+      <Text>
+        Send Message
+      </Text>
+    </TouchableHighlight>
+  },
+
+  render: function() {
+    return (
+      <View style={[styles.formTest, border('blue')]}>
+        <TextInput
+          //updates state text, which will be used to submit
+          //this message
+          onChangeText={(text) => this.setState({text})}
+          value={this.state.text}
+          rejectResponderTermination={false}
+          style={styles.textInput}
+        />
+        <View style={[styles.buttonContainer, border('red')]}>
+          {this.sendMessageButton()}
+        </View>
+      </View>
+    )
+  }
+});
+
+///////////////////////// CHORES ///////////////////////////
+
+/* NOTES
+
+DatePickerExample, UserDrop, and CategoryDrop are the 3
+components that render conditionally in our form's makeshift
+navbar. need to make sure of a few things:
+  -are they styled properly? right now they're rendering
+  in a way so that they take over the page when clicked. 
+  will this translate to all phone layouts and does this 
+  look ok? 
+
+  -instead of normal input fields that can be set as refs,
+  we have distinct components that are providing us with 
+  our choreform data. therefore we can't set simple refs
+  like we usually would for the user input. the data is set
+  in the individual dropdown/datepicker components, and 
+  would need to somehow be passed back up to the choreform.
+  right now i have global variables that update the dropdown/
+  date selection upon user interaction, and the submit chore
+  method object and the choreform state reference these. need
+  to determine if this is ok/best practice and if not how to 
+  resolve it
+
+  -rowdata listview set up is distincly different from dealin
+  with mapped li elements. need to figure out how our done status
+  can be updated. have the updatestatus call hooked up to that
+  button but need to figure out how to delete that particular
+  row from the listview properly and how to pass the request the
+  proper chore id. 
+*/
 var DatePickerExample = React.createClass({
   getDefaultProps: function () {
     return {
@@ -267,6 +483,9 @@ var UserDrop = React.createClass({
   },
 
   render: function() {
+    var userList = users.map(function(user) {
+      return <Option>{user}</Option>
+    })
     return (
       <View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 320}}>
@@ -276,10 +495,7 @@ var UserDrop = React.createClass({
             optionListRef={this._getOptionList}
             defaultValue="Select a User"
             onSelect={this.user}>
-            <Option>Joey</Option>
-            <Option>Lyly</Option>
-            <Option>Nick</Option>
-            <Option>Justin</Option>
+            {userList}
           </Select>
           <View style={{ height: 10 }}/>
           <Text>Selected User: {this.state.user}</Text>
@@ -350,7 +566,44 @@ var CategoryDrop = React.createClass({
   }
 });
 
+var FinanceContainer = React.createClass({
+  getInitialState: function() {
+    showBills: true,
+    showPayments: false,
+    showCreate: false
+  },
 
+  togglePayments: function() {
+    if(this.state.showBills) {
+      this.setState({showBills: !this.state.showBills})
+    } else if ()
+    this.setState({showPayments: !this.state.showPayments})
+  },
+
+  renderPayments: function() {
+    if(this.state.showPayments) {
+      return <PaymentContainer />
+    }
+  },
+
+  render: function() {
+    //nav bar messages, finance, and chores,
+    //Finance
+    //Big empty space that will hold bills, payments or form
+    {this.renderPayments()}
+    {this.renderForm()}
+    //buttons to dictate what goes into empty space 
+    <TouchableHighlight onPress={this.togglePayments}> 
+      <Text>Payment</Text>
+    </TouchableHighlight>
+  }
+})
+
+var PaymentContainer = React.createClass({
+  render: function() {
+    <Text>This is the Payment container</Text>
+  }
+});
 
 var ChoreForm = React.createClass({
   getInitialState: function() {
@@ -653,6 +906,8 @@ var ChoreContainer = React.createClass({
     )
   }
 });
+
+////////////////////// STYLES ////////////////////////////
 
 const styles = StyleSheet.create({
   container: {
