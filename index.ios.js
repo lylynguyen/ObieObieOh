@@ -39,6 +39,8 @@ var chores = [
   {category: 'Bathroom', name: 'Justin', choreName: 'buy new stall for HR'}
 ]
 
+var users = ["Joey", "Justin", "Nick", "Lyly"];
+
 var gDate; 
 var gUser;
 var gCategory;
@@ -54,7 +56,7 @@ var border = function(color) {
 
 var App = React.createClass({
   getInitialState: function() {
-    this.getUsers()
+    this.test()
     return {
       chores: chores,
       messages: messages,
@@ -62,11 +64,8 @@ var App = React.createClass({
     }
   },
 
-  ///////////////////////Users Requests////////////////////
-
-  //return users in house
-  getUsers: function() {
-    fetch(process.env.Base_URL + '/', {
+  test: function() {
+    fetch(process.env.Base_URL + '/dummy', {
       method: 'GET',
       headers: {
         //at some point will need to set token on AsynchSt.
@@ -74,255 +73,12 @@ var App = React.createClass({
         //is promisified, but don't think we need here b/c 
         //we're only retrieving the value
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(users) {
-      //update state users array with response
-      this.setState({users: users});
-    })
-  },
-
-  //gets image for this user 
-  getUserImage: function() {
-    fetch(process.env.Base_URL + '/users/images', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(url) {
-      this.state.imageUrl = url[0].userImageUrl || "https://s-media-cache-ak0.pinimg.com/736x/fb/e1/cd/fbe1cdbc1b728fbb5e157375905d576f.jpg";
-      this.state.name = url[0].name;
-      this.setState({imageUrl: this.state.imageUrl, name: this.state.name});
-    })
-  },
-
-  //get the session
-  getSession: function() {
-    AsyncStorage.removeItem('obie')
-    fetch(process.env.Base_URL + '/obie/', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
-    })
-    .then(function(session) {
-      //asyncstorage is promisified
-      AsyncStorage.setItem('obie', session)
-        .then(function() {
-          this.getUserImage();
-          this.getHouseCode();
-          this.getUsers();
-        })
-    })
-  },
-
-  getHouseCode: function() {
-    fetch(process.env.Base_URL + '/housez/code', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(code) {
-      this.setState({houseCode: code[0].token});
-      this.setState({houseName: code[0].name});
-    })
-  },
-
-  ////////////////CHORE REQUESTS///////////////////
-
-  //load all chores for that house
-  loadChores: function() {
-    fetch(process.env.Base_URL + '/chores/', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(chores) {
-      this.setState({chores: chores});
-    })
-  },
-
-  //post a new chore
-  formSubmit: function(chore) {
-    fetch(process.env.Base_URL + '/chores', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      },
-      body: JSON.stringify(chore)
-    })
-    .then(function(data) {
-      this.loadChores();
-      socket.emit('chore', chore);
-    })
-  },
-
-  //update the status of a chore
-  updateChoreStatus: function() {
-    //need to get the right chore id to pass in, may not be props
-    fetch(process.env.Base_URL + '/chores/' + this.props.chore.id, {
-      method: 'PUT',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(data) {
-      //want to load the chores again, props may not be right
-      this.props.loadChores();
-    })
-  },
-
-  /////////////////////FINANCE REQUESTS//////////////////////
-
-  //load archive of all paid bills
-  //LOCATION: Finance Component --> Finance Container
-  loadBillHistory: function() {
-    fetch(process.env.Base_URL + '/payment/completed', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(bills) {
-      //update state's bill history
-      this.state.billHistory = bills;
-      this.setState({billHistory: this.state.billHistory});
-    })
-  },
-
-  //load list of all payments made to you
-  //LOCATION: Fincance Component --> Finance Container 
-  loadPaymentHistory: function() {
-    fetch(process.env.Base_URL + '/payment/completed/owed', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(payments) {
-      this.state.paymentHistory = payments; 
-      this.setState({paymentHistory: this.state.paymentHistory});
-    })
-  },
-
-  //add a bill to the database
-  //LOCATION: Finance Component --> Finance Container
-  addBill: function(bill) {
-    fetch(process.env.Base_URL + '/payment/bill', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      },
-      body: JSON.stringify(bill)
-    })
-    .then(function(id) {
-      this.createPayments(id)
-      this.loadBills();
-      socket.emit('bill');
-    })
-  },
-
-  //add a payment to the database
-  //LOCATION: Finance Component --> Finance Container
-  addPayment: function(payment) {
-    fetch(process.env.Base_URL + '/payment', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      },
-      body: JSON.stringify(payment)
-    })
-    .then(function(data) {
-      socket.emit('bill');
-    })
-  },
-
-  //load all bills user owes from the database
-  //LOCATION: Finance Component --> Finance Container
-  loadBills: function() {
-    fetch(process.env.Base_URL + '/payment/pay', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(bills) {
-      this.state.bills = bills; 
-      this.setState({bills: this.state.bills});
-    })
-  },
-
-  //load all payments made to the user
-  //LOCATION: Finance Component --> Finance Container
-  loadPayments: function() {
-    fetch(process.env.Base_URL + '/payment/owed', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(payments) {
-      this.setState({paymentsOwed: payments});
-    })
-  },
-
-  //make a venmo payment
-  //LOCATION: Finance Component --> Bill Entry
-  makeVenmoPayment: function(venmoData) {
-    fetch(process.env.Base_URL + '/auth/venmo/payment', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      },
-      body: JSON.stringify(venmoData)
-    })
-    .then(function(payments) {
-      this.markPaymentAsPaid(venmoData.id);
-    })
-  },
-
-  //updates status of payment to paid in the database
-  //LOCATION: Finance Component --> Bill Entry 
-  markPaymentAsPaid: function(paymentId) {
-    fetch(process.env.Base_URL + 'payment/' + paymentId, {
-      method: 'PUT',
-      headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json'
       }
     })
-    .then(function(data) {
-      this.props.loadBills();
+    .then(function(res) {
+      //update state users array with response
+      console.log('got here', res); 
     })
   },
 
@@ -598,17 +354,20 @@ var CategoryDrop = React.createClass({
 
 var ChoreForm = React.createClass({
   getInitialState: function() {
+    console.log('CHORE FORM', this);
     return {
-      text: 'hola',
-      chores: chores,
+      //need the text that the user inputs for choreName
+      choreName: 'hola',
+      //need the user who will perform the chore
       user: '',
       category: '',
+      date: '',
+      chores: chores,
       showStatus: false,
       showDate: false, 
       showUser: false,
       showCategory: false,
-      showClose: false,
-      date: ''
+      showClose: false
     }
   },
 
@@ -629,15 +388,6 @@ var ChoreForm = React.createClass({
       return <CategoryDrop toggleClose={this.toggleClose}/>
     }
   },
-
-  // renderClose: function() {
-  //   if(this.state.showClose) {
-  //     return 
-  //     <View style={{justifyContent: 'flex-end', alignItems: 'center', marginBottom: 30}}>
-  //       <TouchableHighlight onPress={this.toggleClose}>Close</TouchableHighlight>
-  //     </View>
-  //   }
-  // },
 
   toggleDate: function () {
     // this.setState({showClose: true})
@@ -703,7 +453,7 @@ var ChoreForm = React.createClass({
     var choreObject = {
       name: gUser,
       category: gCategory,
-      choreName: this.state.text, 
+      choreName: this.state.choreName, 
       date: gDate.toString().split(' ').slice(0, 4).join(' '),
       completed: false
     }
@@ -736,7 +486,7 @@ var ChoreForm = React.createClass({
         <View style={[styles.formTest, border('blue')]}>
           <TextInput
             onChangeText={(text) => this.setState({text})}
-            value={this.state.text}
+            value={this.state.choreName}
             rejectResponderTermination={false}
             style={styles.textInput}/>
         <View style={[styles.buttonContainer, border('red')]}>
@@ -755,8 +505,7 @@ var ChoreContainer = React.createClass({
       chores: chores,
       dataSource: ds.cloneWithRows(chores),
       user: '',
-      category: '',
-      showForm: false
+      category: ''
     };
   },
 
@@ -776,6 +525,22 @@ var ChoreContainer = React.createClass({
     if(this.state.showForm) {
       return <ChoreForm sendChore={this.sendChore}/>
     }
+  },
+
+  submitChore: function(chore) {
+    fetch(process.env.Base_URL + '/chores', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      },
+      body: JSON.stringify(chore)
+    })
+    .then(function(data) {
+      this.loadChores();
+      socket.emit('chore', chore);
+    })
   },
 
   render: function() {
