@@ -2,11 +2,13 @@
 'use strict';
 import React, {
   DatePickerIOS,
+  AsyncStorage,
   Modal,
   AppRegistry,
   Component,
   StyleSheet,
   Text,
+  Fetch,
   View,
   Picker,
   ListView,
@@ -41,7 +43,7 @@ var gDate;
 var gUser;
 var gCategory;
 
-var showChores = true; 
+var Base_URL = "http://localhost:8081" 
 
 var border = function(color) {
   return {
@@ -50,30 +52,280 @@ var border = function(color) {
   }
 }
 
-
-
-
 var App = React.createClass({
   getInitialState: function() {
+    this.getUsers()
     return {
       chores: chores,
-      messages: messages
+      messages: messages,
+      users: users
     }
   },
-  // addMessage: function(messageText) {
-  //   console.log('adding message: ', messageText);
-  //   this.state.messages.push({
-  //     name: 'Justin',
-  //     text: messageText
-  //   })
-  //   console.log(this.state.messages);
-  //   this.setState({dataSource: this.state.dataSource.cloneWithRows(
-  //     this._genRows(this._pressData)
-  //   )});
-  //   this.setState({
-  //     messages: this.state.messages
-  //   });
-  // },
+
+  ///////////////////////Users Requests////////////////////
+
+  //return users in house
+  getUsers: function() {
+    fetch(process.env.Base_URL + '/', {
+      method: 'GET',
+      headers: {
+        //at some point will need to set token on AsynchSt.
+        //which acts just as local storage did. Async Storage
+        //is promisified, but don't think we need here b/c 
+        //we're only retrieving the value
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(users) {
+      //update state users array with response
+      this.setState({users: users});
+    })
+  },
+
+  //gets image for this user 
+  getUserImage: function() {
+    fetch(process.env.Base_URL + '/users/images', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(url) {
+      this.state.imageUrl = url[0].userImageUrl || "https://s-media-cache-ak0.pinimg.com/736x/fb/e1/cd/fbe1cdbc1b728fbb5e157375905d576f.jpg";
+      this.state.name = url[0].name;
+      this.setState({imageUrl: this.state.imageUrl, name: this.state.name});
+    })
+  },
+
+  //get the session
+  getSession: function() {
+    AsyncStorage.removeItem('obie')
+    fetch(process.env.Base_URL + '/obie/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(function(session) {
+      //asyncstorage is promisified
+      AsyncStorage.setItem('obie', session)
+        .then(function() {
+          this.getUserImage();
+          this.getHouseCode();
+          this.getUsers();
+        })
+    })
+  },
+
+  getHouseCode: function() {
+    fetch(process.env.Base_URL + '/housez/code', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(code) {
+      this.setState({houseCode: code[0].token});
+      this.setState({houseName: code[0].name});
+    })
+  },
+
+  ////////////////CHORE REQUESTS///////////////////
+
+  //load all chores for that house
+  loadChores: function() {
+    fetch(process.env.Base_URL + '/chores/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(chores) {
+      this.setState({chores: chores});
+    })
+  },
+
+  //post a new chore
+  formSubmit: function(chore) {
+    fetch(process.env.Base_URL + '/chores', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      },
+      body: JSON.stringify(chore)
+    })
+    .then(function(data) {
+      this.loadChores();
+      socket.emit('chore', chore);
+    })
+  },
+
+  //update the status of a chore
+  updateChoreStatus: function() {
+    //need to get the right chore id to pass in, may not be props
+    fetch(process.env.Base_URL + '/chores/' + this.props.chore.id, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(data) {
+      //want to load the chores again, props may not be right
+      this.props.loadChores();
+    })
+  },
+
+  /////////////////////FINANCE REQUESTS//////////////////////
+
+  //load archive of all paid bills
+  //LOCATION: Finance Component --> Finance Container
+  loadBillHistory: function() {
+    fetch(process.env.Base_URL + '/payment/completed', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(bills) {
+      //update state's bill history
+      this.state.billHistory = bills;
+      this.setState({billHistory: this.state.billHistory});
+    })
+  },
+
+  //load list of all payments made to you
+  //LOCATION: Fincance Component --> Finance Container 
+  loadPaymentHistory: function() {
+    fetch(process.env.Base_URL + '/payment/completed/owed', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(payments) {
+      this.state.paymentHistory = payments; 
+      this.setState({paymentHistory: this.state.paymentHistory});
+    })
+  },
+
+  //add a bill to the database
+  //LOCATION: Finance Component --> Finance Container
+  addBill: function(bill) {
+    fetch(process.env.Base_URL + '/payment/bill', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      },
+      body: JSON.stringify(bill)
+    })
+    .then(function(id) {
+      this.createPayments(id)
+      this.loadBills();
+      socket.emit('bill');
+    })
+  },
+
+  //add a payment to the database
+  //LOCATION: Finance Component --> Finance Container
+  addPayment: function(payment) {
+    fetch(process.env.Base_URL + '/payment', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      },
+      body: JSON.stringify(payment)
+    })
+    .then(function(data) {
+      socket.emit('bill');
+    })
+  },
+
+  //load all bills user owes from the database
+  //LOCATION: Finance Component --> Finance Container
+  loadBills: function() {
+    fetch(process.env.Base_URL + '/payment/pay', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(bills) {
+      this.state.bills = bills; 
+      this.setState({bills: this.state.bills});
+    })
+  },
+
+  //load all payments made to the user
+  //LOCATION: Finance Component --> Finance Container
+  loadPayments: function() {
+    fetch(process.env.Base_URL + '/payment/owed', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(payments) {
+      this.setState({paymentsOwed: payments});
+    })
+  },
+
+  //make a venmo payment
+  //LOCATION: Finance Component --> Bill Entry
+  makeVenmoPayment: function(venmoData) {
+    fetch(process.env.Base_URL + '/auth/venmo/payment', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'token': AsyncStorage.getItem('obie')
+      },
+      body: JSON.stringify(venmoData)
+    })
+    .then(function(payments) {
+      this.markPaymentAsPaid(venmoData.id);
+    })
+  },
+
+  //updates status of payment to paid in the database
+  //LOCATION: Finance Component --> Bill Entry 
+  markPaymentAsPaid: function(paymentId) {
+    fetch(process.env.Base_URL + 'payment/' + paymentId, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(function(data) {
+      this.props.loadBills();
+    })
+  },
+
   render: function() {
     return (
       <View style={[styles.container, border('black')]}>
@@ -89,29 +341,18 @@ var App = React.createClass({
   }
 });
 
-var CustomLayoutAnimation = {
-    duration: 200,
-    create: {
-      type: LayoutAnimation.Types.linear,
-      property: LayoutAnimation.Properties.opacity,
-    },
-    update: {
-      type: LayoutAnimation.Types.curveEaseInEaseOut,
-    },
-  };
-
 var Form = React.createClass({
   getInitialState: function() {
     return {
       text: 'hi'
     }
   },
+
   addMessage: function() {
-    console.log('addMessage from form..', this.state.text);
     var messageObject = {name: 'Justin', text: this.state.text}
-    console.log('this.state.text: ', this.state.text);
     this.props.sendMessage(messageObject);
   },
+
   sendMessageButton: function() {
     return <TouchableHighlight
       underlayColor="gray"
@@ -123,6 +364,7 @@ var Form = React.createClass({
       </Text>
     </TouchableHighlight>
   },
+
   render: function() {
     return (
       <View style={[styles.formTest, border('blue')]}>
@@ -158,6 +400,7 @@ var MessageContainer = React.createClass({
       dataSource: ds.cloneWithRows(messages)
     };
   },
+
   sendMessage: function(messageObj) {
     this.state.messages.push(messageObj);
     this.setState({
@@ -165,6 +408,7 @@ var MessageContainer = React.createClass({
       messages: this.state.messages
     })
   },
+
   renderMessageEntry: function(rowData) {
     return (
       <View style={[styles.messageEntry, border('black')]}>
@@ -177,6 +421,7 @@ var MessageContainer = React.createClass({
       </View>
     )
   },
+
   render: function() {
     return (
       <View style={[styles.messageContainer, border('red')]}>
@@ -220,9 +465,6 @@ var DatePickerExample = React.createClass({
   },
 
   render: function() {
-    // Ideally, the timezone input would be a picker rather than a
-    // text input, but we don't have any pickers yet :(
-    console.log('TIMEZONE Date', this.state.date);
     return (
       <View>
         <View>
@@ -245,33 +487,6 @@ var DatePickerExample = React.createClass({
   },
 });
 
-var WithLabel = React.createClass({
-  render: function() {
-    return (
-      <View style={styles.labelContainer}>
-        <View style={styles.labelView}>
-          <Text style={styles.label}>
-            {this.props.label}
-          </Text>
-        </View>
-        {this.props.children}
-      </View>
-    );
-  }
-});
-
-var Heading = React.createClass({
-  render: function() {
-    return (
-      <View style={styles.headingContainer}>
-        <Text style={styles.heading}>
-          {this.props.label}
-        </Text>
-      </View>
-    );
-  }
-});
-
 var UserDrop = React.createClass({
   getInitialState: function() {
     return {
@@ -279,9 +494,6 @@ var UserDrop = React.createClass({
     };
   },
 
-  test: function() {
-    console.log(this);
-  },
   componentDidMount: function() {
     updatePosition(this.refs['SELECT1']);
     updatePosition(this.refs['OPTIONLIST']);
@@ -305,9 +517,9 @@ var UserDrop = React.createClass({
           <Select
             width={250}
             ref="SELECT1"
-            optionListRef={this._getOptionList.bind(this)}
+            optionListRef={this._getOptionList}
             defaultValue="Select a User"
-            onSelect={this.user.bind(this)}>
+            onSelect={this.user}>
             <Option>Joey</Option>
             <Option>Lyly</Option>
             <Option>Nick</Option>
@@ -358,9 +570,9 @@ var CategoryDrop = React.createClass({
           <Select
             width={250}
             ref="SELECT2"
-            optionListRef={this._getOptionList.bind(this)}
+            optionListRef={this._getOptionList}
             defaultValue="Select a Category"
-            onSelect={this.category.bind(this)}>
+            onSelect={this.category}>
             <option>Kitchen</option>
             <option>Bathroom</option>
             <option>Livingroom</option>
@@ -434,33 +646,24 @@ var ChoreForm = React.createClass({
   },
 
    toggleUser: function () {
-    // this.setState({showClose: true})
     this.setState({showUser: !this.state.showUser})
-    // LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
   },
 
    toggleCategory: function () {
-    // this.setState({showClose: true})
     this.setState({showCategory: !this.state.showCategory})
-    // LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
   },
 
   toggleClose: function() {
-    console.log('USER DROP STATUS', this.state.showUser)
     if(this.state.showUser) {
-      ('CORRECT CASE');
       this.setState({showUser: !this.state.showUser})
     } else if (this.state.showCategory) {
       this.setState({showCategory: !this.state.showCategory})
     } else if (this.state.showDate) {
       this.setState({showDate: !this.state.showDate})
     }
-    // this.setState({showClose: false})
   },
 
   setDateButton: function() {
-    //var showStyle = this.state.showStatus === true ? {backgroundColor: 'red', width: 50} : {backgroundColor: 'green', width: 100};
-    console.log('DATE STATUS', this.state.showDate); 
     return <TouchableHighlight
       underlayColor="gray"
       onPress={this.toggleDate}
@@ -497,7 +700,6 @@ var ChoreForm = React.createClass({
   },
 
   addChore: function() {
-    console.log('GDATE', typeof gDate);
     var choreObject = {
       name: gUser,
       category: gCategory,
@@ -507,6 +709,7 @@ var ChoreForm = React.createClass({
     }
     this.props.sendChore(choreObject);
   },
+
   sendChoreButton: function() {
     return <TouchableHighlight
       underlayColor="gray"
@@ -520,7 +723,6 @@ var ChoreForm = React.createClass({
   },
   
   render: function() {
-    console.log('THIS PROPS', this.props);
     return (
       <View>
         {this.renderUser()}
@@ -558,8 +760,7 @@ var ChoreContainer = React.createClass({
     };
   },
 
- 
-   sendChore: function(choreObj) {
+  sendChore: function(choreObj) {
     this.state.chores.push(choreObj);
     this.setState({
       dataSource: this.state.dataSource.cloneWithRows(this.state.chores),
@@ -616,280 +817,6 @@ var ChoreContainer = React.createClass({
       )
   }
 });
-
-
-
-// const initialState = {
-//   messages: messages,
-//   chores: [{name: 'eat the cheese'}],
-//   text: 'nachos',
-//   users: ['Joey', 'Lyly', 'Nick', 'Justin'],
-//   categories: ['Kitchen', 'Living Room', 'Yard', 'Laundry Room', 'Bathroom', 'Bedroom', 'Other']
-// }
-
-// const app = (state = initialState, action) => {
-//  return state; 
-// };
-
-
-// const chore = (state, action) => {
-//   switch (action.type) {
-//     case 'ADD_CHORE': 
-//       return {
-//         name: action.name
-//       };
-//   }
-// };
-
-// const chores = (state, action) => {
-//   switch (action.type) {
-//     case 'ADD_CHORE':
-//       return [
-//         ...state,  
-//         chore(undefined, action)
-//       ];
-//     default: 
-//       return state; 
-//   }
-// }
-
-// const store = createStore(app);
-
-// const ScrollableTabView = require('react-native-scrollable-tab-view');
-
-// let messages = [{name: "Lyly", text: "a;lshee hksehkahfj askhfakjse ashkjehakjes afeksjfhk esksjks jfhskfe"},{name: "Boner", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Joey", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Nick", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."}]
-// // var messages = [];
-// const border = (color) => {
-//   return {
-//     borderWidth: 4,
-//     borderColor: color
-//   }
-// }
-
-// const App = () => 
-//   <View style={[styles.container, border('black')]}>
-//     {/*<Navbar />
-//     <MessageContainer messages={this.state.messages} />*/}
-//     <ScrollableTabView>
-//       <MessageContainer messages={store.getState().messages} tabLabel="Messages" />
-//       <MessageContainer tabLabel="Finance" />
-//       <ChoreContainer tabLabel="Chores" />
-//     </ScrollableTabView>
-//   </View>
-  
-
-// var Form = React.createClass({
-//   addMessage: function() {
-//     console.log('addMessage from form..', this.state.text);
-//     var messageObject = {name: 'Justin', text: this.state.text}
-//     console.log('this.state.text: ', this.state.text);
-//     this.props.sendMessage(messageObject);
-//   },
-//   sendMessageButton: function() {
-//     return <TouchableHighlight
-//       underlayColor="gray"
-//       onPress={this.addMessage}
-//       style={[styles.sendMessageButton]}
-//       >
-//       <Text>
-//         Send Message
-//       </Text>
-//     </TouchableHighlight>
-//   },
-//   render: function() {
-//     return (
-//       <View style={[styles.formTest, border('blue')]}>
-//         <TextInput
-//           onChangeText={(text) => this.setState({text})}
-//           value={store.getState().text}
-//           rejectResponderTermination={false}
-//           style={styles.textInput}
-//         />
-//         <View style={[styles.buttonContainer, border('red')]}>
-//           {this.sendMessageButton()}
-//         </View>
-//       </View>
-//     )
-//   }
-// });
-
-// const Navbar = () => 
-//   <View style={[styles.navbar, border('green')]}>
-//     <Text>Navbar</Text>
-//   </View>
-
-
-// var MessageContainer = React.createClass({
-//   getInitialState: function() {
-//     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-//     return {
-//       messages: messages,
-//       dataSource: ds.cloneWithRows(messages)
-//     };
-//   },
-//   sendMessage: function(messageObj) {
-//     this.state.messages.push(messageObj);
-//     this.setState({
-//       dataSource: this.state.dataSource.cloneWithRows(this.state.messages),
-//       messages: this.state.messages
-//     })
-//   },
-//   renderMessageEntry: function(rowData) {
-//     return (
-//       <View style={[styles.messageEntry, border('black')]}>
-//         <Text>
-//           Name: {rowData.name}
-//         </Text>
-//         <Text>
-//           Message: {rowData.text}
-//         </Text>
-//       </View>
-//     )
-//   },
-//   render: function() {
-//     return (
-//       <View style={[styles.messageContainer, border('red')]}>
-//         <Text style={styles.viewTitle}>Messages</Text>
-//         <ListView
-//           dataSource={this.state.dataSource}
-//           renderRow={this.renderMessageEntry}
-//         />
-//         <Form sendMessage={this.sendMessage} />
-//       </View>
-//     )
-//   }
-// });
-
-// var ChoreForm = React.createClass({
-//   addChore: function() {
-//     var messageObject = {name: 'Justin', text: this.state.choreName}
-//     console.log('this.state.text: ', this.state.chorName);
-//     this.props.sendMessage(messageObject);
-//   },
-//   sendMessageButton: function() {
-//     return <TouchableHighlight
-//       underlayColor="gray"
-//       onPress={this.addMessage}
-//       style={[styles.sendMessageButton]}
-//       >
-//       <Text>
-//         Send Message
-//       </Text>
-//     </TouchableHighlight>
-//   },
-//   render: function() {
-//     return (
-//       <View style={[styles.formTest, border('blue')]}>
-//         <TextInput
-//           onChangeText={(text) => this.setState({text})}
-//           value={store.getState().text}
-//           rejectResponderTermination={false}
-//           style={styles.textInput}
-//         />
-//         <View style={[styles.buttonContainer, border('red')]}>
-//           {this.sendMessageButton()}
-//         </View>
-//       </View>
-//     )
-//   }
-// });
-// var ChoreContainer = React.createClass({
-//   getInitialState: function() {
-//     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-//     return {
-//       messages: messages,
-//       dataSource: ds.cloneWithRows(messages)
-//     };
-//   },
-//   sendMessage: function(messageObj) {
-//     this.state.messages.push(messageObj);
-//     this.setState({
-//       dataSource: this.state.dataSource.cloneWithRows(this.state.messages),
-//       messages: this.state.messages
-//     })
-//   },
-//   renderMessageEntry: function(rowData) {
-//     return (
-//       <View style={[styles.messageEntry, border('black')]}>
-//         <Text>
-//           Name: {rowData.name}
-//         </Text>
-//         <Text>
-//           Message: {rowData.text}
-//         </Text>
-//       </View>
-//     )
-//   },
-//   render: function() {
-//     return (
-//       <View style={[styles.messageContainer, border('red')]}>
-//         <Text style={styles.viewTitle}>Messages</Text>
-//         <ListView
-//           dataSource={this.state.dataSource}
-//           renderRow={this.renderMessageEntry}
-//         />
-//         <Form sendMessage={this.sendMessage} />
-//       </View>
-//     )
-//   }
-// });
-
-
-// // const ChoreContainer = ({
-// //   value = () => {
-// //     return 2 * 2;
-// //   }, 
-// //   setThingsUp = () => {
-// //     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-// //     return {
-// //       chores: this.getState().chores,
-// //       dataSource: ds.cloneWithRows(messages)
-// //     };
-// //   },
-// //   renderChoreEntry = (rowData) => {
-// //     return (
-// //       <View style={[styles.messageEntry, border('black')]}>
-// //         <Text>
-// //           Name: {rowData.name}
-// //         </Text>
-// //       </View>
-// //     )
-// //   }
-// // }) => 
-// //   <View>
-// //     <View style={[styles.messageContainer, border('red')]}>
-// //       <Text style={styles.viewTitle}>Chores</Text>
-// //     </View>
-// //     <View style={[styles.formTest, border('blue')]}>
-// //       <TextInput
-// //         // ref={node => {
-// //         //   this.input = node;
-// //         // }} 
-// //         rejectResponderTermination={false}
-// //         style={styles.textInput}/>
-// //       <View style={[styles.buttonContainer, border('red')]}>
-// //         <TouchableHighlight
-// //           underlayColor="gray"
-// //           onPress={() => {
-// //             store.dispatch({
-// //               type: 'ADD_CHORE', 
-// //               name: 'testing'
-// //             });
-// //             // this.input.value = ''
-// //           }}
-// //           style={[styles.sendMessageButton]}
-// //           >
-// //           <Text>
-// //             Submit Chore
-// //           </Text>
-// //         </TouchableHighlight>
-// //       </View>
-// //     </View>
-// //   </View>
-//   // ref={node => {
-//   //     this.input = node;
-//   //   }}
-
 
 const styles = StyleSheet.create({
   container: {
@@ -970,28 +897,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   }
 });
-
-/*
-
-    <View>
-      <ListView
-        dataSource={store.getState.dataSource}
-        renderRow={renderChoreEntry()}
-      />
-    </View>
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Select
-        width={250}
-        defaultValue="Select category...">
-        <Option>Kitchen</Option>
-        <Option>Living Room</Option>
-        <Option>Bathroom</Option>
-        <Option>Bedroom</Option>
-        <Option>Yard</Option>
-        <Option>Laundry Room</Option>
-        <Option>Other</Option>
-      </Select>
-    </View>
-  */
 
 AppRegistry.registerComponent('ObieObieOh', () => App);
