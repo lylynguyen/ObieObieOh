@@ -1,4 +1,3 @@
-
 'use strict';
 import React, {
   DatePickerIOS,
@@ -32,8 +31,6 @@ import {createStore} from 'redux';
 
 var ScrollableTabView = require('react-native-scrollable-tab-view');
 
-var messages = [{name: "Lyly", text: "a;lshee hksehkahfj askhfakjse ashkjehakjes afeksjfhk esksjks jfhskfe"},{name: "Boner", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Joey", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Nick", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."}]
-// var messages = [];
 var chores = [
   {category: 'kitchen', name: 'Joey', choreName: 'eat the cheese'}, 
   {category: 'Bathroom', name: 'Justin', choreName: 'buy new stall for HR'}
@@ -457,7 +454,7 @@ var ChoreForm = React.createClass({
       date: gDate.toString().split(' ').slice(0, 4).join(' '),
       completed: false
     }
-    this.props.submitChore(choreObject);
+    this.props.sendChore(choreObject);
   },
 
   sendChoreButton: function() {
@@ -502,63 +499,13 @@ var ChoreContainer = React.createClass({
   getInitialState: function() {
     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
-      //will be replaced by loadChores()
       chores: chores,
       dataSource: ds.cloneWithRows(chores),
-      //will be replaced by getUsers() called on compdidmount
-      users: []
+      user: '',
+      category: ''
     };
   },
 
-  getUsers: function() {
-    //verified that this was triggered on comp mount
-    fetch(process.env.Base_URL + '/', {
-      method: 'GET',
-      headers: {
-        //at some point will need to set token on AsynchSt.
-        //which acts just as local storage did. Async Storage
-        //is promisified, but don't think we need here b/c 
-        //we're only retrieving the value
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(users) {
-      //update state users array with response
-      console.log('USERS', users);
-      this.setState({users: users});
-    })
-    .catch(function() {
-      console.log('nope');
-    })
-  },
-
-  loadChores: function() {
-    //verified that this was triggered on comp mount 
-    fetch(process.env.Base_URL + '/chores/', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(chores) {
-      this.setState({chores: chores});
-    })
-  },
-
-  componentDidMount: function() {
-    //sets choreContainer state to be live users load
-    this.getUsers();
-    //loads all chores currently in the database 
-    this.loadChores();
-    var that = this;
-  },
-
-  //used only to update chore dummy data locally
-  //REMOVE WHEN DB CONNECTION HOOKED UP
   sendChore: function(choreObj) {
     this.state.chores.push(choreObj);
     this.setState({
@@ -578,7 +525,7 @@ var ChoreContainer = React.createClass({
   },
 
   submitChore: function(chore) {
-    //verified, receiving correct choreobj and arriving here properly
+    console.log('SUBMITTING CHORE'); 
     fetch(process.env.Base_URL + '/chores', {
       method: 'POST',
       headers: {
@@ -594,63 +541,43 @@ var ChoreContainer = React.createClass({
     })
   },
 
-  updateChoreStatus: function() {
-    //gets to the function properly on press
-    //need to get the right chore id to pass in, may not be props
-    //we want to call this when an item in the chore list is completed
-    //big issue is understanding listview better and being able to access
-    //proper chore. 
-    fetch(process.env.Base_URL + '/chores/' + this.props.chore.id, {
-      method: 'PUT',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
-      }
-    })
-    .then(function(data) {
-      //want to load the chores again, props may not be right
-      this.props.loadChores();
-    })
-  },
-
   render: function() {
     return (
-      <View style={[styles.messageContainer, border('red')]}>
-        <Text style={styles.viewTitle}>Chores</Text>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={(rowData) => (
-            <View style={[styles.choreEntry, border('black')]}>
-              <View>
-                <Text>
-                  Name: {rowData.name}
-                </Text>
-                <Text>
-                  Chore: {rowData.choreName}
-                </Text>
-                <Text>
-                  Date: {rowData.date}
-                </Text>
-                <Text>
-                  Category: {rowData.category}
-                </Text>
+        <View style={[styles.messageContainer, border('red')]}>
+          <Text style={styles.viewTitle}>Chores</Text>
+          <ListView
+            dataSource={this.state.dataSource}
+            renderRow={(rowData) => (
+              <View style={[styles.choreEntry, border('black')]}>
+                <View>
+                  <Text>
+                    Name: {rowData.name}
+                  </Text>
+                  <Text>
+                    Chore: {rowData.choreName}
+                  </Text>
+                  <Text>
+                    Date: {rowData.date}
+                  </Text>
+                  <Text>
+                    Category: {rowData.category}
+                  </Text>
+                </View>
+                <View style={{alignItems: 'center'}}>
+                  <Text 
+                  onPress={this.completeChore}>
+                    Done?
+                  </Text>
+                </View>
               </View>
-              <View style={{alignItems: 'center'}}>
-                <Text 
-                onPress={this.updateChoreStatus}>
-                  Done?
-                </Text>
-              </View>
-            </View>
-          )}
-        />
-        <View style={{alignItems: 'center', marginBottom: 10}} >
-          <Text onPress={this.toggleForm}>Toggle Chore Form</Text>
+            )}
+          />
+          <View style={{alignItems: 'center', marginBottom: 10}} >
+            <Text onPress={this.toggleForm}>Toggle Chore Form</Text>
+          </View>
+          {this.renderForm()}
         </View>
-        {this.renderForm()}
-      </View>
-    )
+      )
   }
 });
 
@@ -734,4 +661,4 @@ const styles = StyleSheet.create({
   }
 });
 
-AppRegistry.registerComponent('ObieObieOh', () => App);
+module.exports = ChoreContainer;
