@@ -2,7 +2,7 @@ var db = require('../db');
 
 module.exports = {
   get: function (params, callback) {
-    var queryStr = "SELECT users.name, chores.id, chores.name as chorename, chores.category, chores.completed, chores.dueDate, chores.houseId from Chores LEFT OUTER JOIN Users ON (Chores.UserId = users.id) WHERE chores.houseId=? and completed=0";
+    var queryStr = "SELECT Users.name, Chores.id, Chores.name as chorename, Chores.category, Chores.completed, Chores.dueDate, Chores.houseId from Chores LEFT OUTER JOIN Users ON (Chores.UserId = Users.id) WHERE Chores.houseId=? and completed=0";
     db.query(queryStr, params, function(err, results) {
       callback(err, results);
     });

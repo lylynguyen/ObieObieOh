@@ -11,11 +11,17 @@ var cors = require('cors');
 var user = require('./controllers/userController');
 
 var jwt = require('jwt-simple');
+//set this on heroku
+
+// if(!process.env.deployCheck){
+//   require('dotenv').load();  
+
+// }
 require('dotenv').load();
 
 var Venmo_Client_ID = process.env.venmo_client_ID;
 var Venmo_Client_SECRET = process.env.venmo_client_secret;
-var Venmo_Callback_URL = 'http://localhost:8080/auth/venmo/callback';
+var Venmo_Callback_URL = process.env.Base_URL +'/auth/venmo/callback';
 
 app.set('port', (process.env.PORT || 8080));
 
@@ -26,10 +32,14 @@ var server = app.listen(app.get('port'), function() {
 var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function(socket){
-  console.log('a user connected  ~(_8^(I) ');
   socket.on('message', function(data) {
     io.sockets.emit('message', data); // broadcast to all but the sender
-    console.log("server nsp->%s", socket.nsp.name)
+  });
+  socket.on('chore', function(data) {
+    io.sockets.emit('chore', data); // broadcast to all but the sender
+  });
+  socket.on('bill', function(data) {
+    io.sockets.emit('bill', data); // broadcast to all but the sender
   });
 })
 
@@ -65,48 +75,53 @@ passport.use(new VenmoStrategy({
     obj.access_token = accessToken;
     obj.refresh_token = refreshToken;
     obj.venmoid = venmo.id;
+    obj.userImageUrl = venmo._json.profile_picture_url || null;
+
+    console.log("VENMO", venmo);
 
     var jtObj = {};
     jtObj.email = venmo.email;
     jtObj.access_token = accessToken;
 
-
-    request.get('http://localhost:8080/users/venmo/'+ venmo.id, function(err, resp, body) {
+    console.log("URL", process.env.Base_URL +'/users/venmo/'+ venmo.id)
+    request.get(process.env.Base_URL +'/users/venmo/'+ venmo.id, function(err, resp, body) {
 
       if (!err && resp.statusCode == 200) {
         if (JSON.parse(body).length === 0){
 
           request({
-            url: 'http://localhost:8080/users', //URL to hit
+            url: process.env.Base_URL +'/users', //URL to hit
             method: 'POST',
             json: obj //Set the body as a string
           }, function(error, response, body){
               if(error) {
+                console.log('post error', error);
                 return done(error);
               } else {
                 jtObj['userid']=body;
-                var jwtObj = jwt.encode(JSON.stringify(jtObj), process.env.secret_code);
+                var jwtObj = jwt.encode(jtObj, process.env.secret_code);
                 return done(null, jwtObj);
               }
           });
         }
         else {
           request({
-            url: 'http://localhost:8080/users', //URL to hit
+            url: process.env.Base_URL +'/users', //URL to hit
             method: 'PUT',
             json: obj
           }, function (error, response, body) {
             if (error) {
               return done(error);
             } else {
-              request.get('http://localhost:8080/users/id/' + venmo.username, function(error, response, body) {
-                console.log("ID", body);
+              request.get(process.env.Base_URL +'/users/id/' + venmo.username, function(error, response, body) {
                 body=JSON.parse(body);
                 var userId = body[0]['id'] ||null;
                 var houseId = body[0]['houseId'] || null;
-                jtObj['userid']=userId;
-                jtObj['houseId']=houseId;
-                var jwtObj = jwt.encode(JSON.stringify(jtObj), process.env.secret_code);
+                var isLandlord = body[0]['isLandlord'] || null;
+                jtObj['userid'] = userId;
+                jtObj['houseId'] = houseId;
+                jtObj['isLandlord'] = isLandlord;
+                var jwtObj = jwt.encode(jtObj, process.env.secret_code);
                 return done(null, jwtObj);
               })
 
@@ -114,7 +129,7 @@ passport.use(new VenmoStrategy({
           });
         }
       } else {
-        console.log('error');
+        console.log("get error", err)
         return done(err);
       }
     })

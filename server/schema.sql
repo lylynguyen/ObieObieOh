@@ -30,6 +30,8 @@ CREATE TABLE `Users` (
   `venmo` VARCHAR(1000),
   `balance` FLOAT,
   `venmoid` VARCHAR(500),
+  `userImageUrl` VARCHAR(200),
+  `isLandlord` TINYINT DEFAULT 0,
   PRIMARY KEY (`id`)
 );
 
@@ -43,7 +45,9 @@ DROP TABLE IF EXISTS `House`;
 CREATE TABLE `House` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(30) NOT NULL DEFAULT 'NULL',
-  `token` INT NOT NULL DEFAULT 0, 
+  `token` VARCHAR(15) NOT NULL,
+  `address` VARCHAR(200),
+  `landlordId` INT,
   PRIMARY KEY (`id`)
 );
 
@@ -57,7 +61,7 @@ DROP TABLE IF EXISTS `Chores`;
 CREATE TABLE `Chores` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `userId` INT,
-  `name` VARCHAR(20) NOT NULL,
+  `name` VARCHAR(30) NOT NULL,
   `category` VARCHAR(20) NOT NULL,
   `completed` TINYINT NOT NULL DEFAULT 0,
   `dueDate` DATE NULL,
@@ -78,6 +82,7 @@ CREATE TABLE `Messages` (
   `text` MEDIUMTEXT NOT NULL,
   `houseId` INT NOT NULL,
   `time` DATETIME NOT NULL,
+  `landlordChat` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 );
 
@@ -120,6 +125,7 @@ CREATE TABLE `Payment` (
 -- ---
 
 ALTER TABLE `Users` ADD FOREIGN KEY (houseId) REFERENCES `House` (`id`);
+ALTER TABLE `House` ADD FOREIGN KEY (landlordId) REFERENCES `Users` (`id`);
 ALTER TABLE `Chores` ADD FOREIGN KEY (userId) REFERENCES `Users` (`id`);
 ALTER TABLE `Messages` ADD FOREIGN KEY (userId) REFERENCES `Users` (`id`);
 ALTER TABLE `Messages` ADD FOREIGN KEY (houseId) REFERENCES `House` (`id`);
@@ -142,11 +148,11 @@ ALTER TABLE `Payment` ADD FOREIGN KEY (userId) REFERENCES `Users` (`id`);
 -- Test Data
 -- ---
 
-INSERT INTO `House` (`id`,`name`) VALUES
-(1,'fun house');
+INSERT INTO `House` (`id`,`name`,`token`) VALUES
+(1,'Landlord House', 'QWERTY123');
 
-INSERT INTO `House` (`id`,`name`) VALUES
-(2,'less fun house');
+INSERT INTO `House` (`id`,`name`,`token`) VALUES
+(2,'less fun house', '12345');
 
 -- INSERT INTO `Users` (`id`,`name`,`password`,`houseId`) VALUES
 -- ('','','','');
