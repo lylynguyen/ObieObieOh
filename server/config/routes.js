@@ -15,7 +15,11 @@ var request = require('request');
 
 module.exports = function(app, express) {
 
-  
+  app.get('/dummy', function(req, res) {
+    console.log('loggin in terminal');
+    res.send('test');
+  });
+
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(session({

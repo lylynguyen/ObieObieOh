@@ -15,6 +15,7 @@ import React, {
   ListView,
   TextInput,
   TouchableHighlight,
+  NavigatorIOS,
   TouchableOpacity,
   LayoutAnimation
 } from 'react-native';
@@ -48,8 +49,6 @@ var gDate;
 var gUser;
 var gCategory;
 
-var Base_URL = "http://localhost:8081" 
-
 var border = function(color) {
   return {
     borderWidth: 4,
@@ -75,7 +74,27 @@ roster/landlord views/user image/house code appear?
 */
 
 var App = React.createClass({
+  testConnection: function() {
+    console.log('testing connection'); 
+    fetch('http://localhost:8080/dummy', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+        //'token': AsyncStorage.getItem('obie')
+      }
+    })
+    .then(function(data) {
+      //update state users array with response
+      console.log('got data', data); 
+    })
+    .catch(function(err) {
+      console.log(err);
+    })
+  }, 
+
   getInitialState: function() {
+    this.testConnection(); 
     return {
       //eventually should all be replaced by empty arrs,
       //they will be overwritten by fetch calls 
@@ -203,7 +222,7 @@ var App = React.createClass({
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
           <MessageContainer messages={this.state.messages} tabLabel="Messages" />
-          <DatePickerExample date={this.state.date} tabLabel="Date Picker" />
+          <Login date={this.state.date} tabLabel="Login" />
           <ChoreContainer chores={this.state.chores} tabLabel="Chores" />
         </ScrollableTabView>
       </View>
@@ -222,6 +241,23 @@ var Navbar = React.createClass({
     )
   }
 });
+
+
+////////////////////// LOGIN ///////////////////////////
+
+var Login = React.createClass({
+  render: function() {
+    return (
+      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+        <Text onPress={this.navToApp}>Login with Venmo</Text>
+      </View>
+    )
+  },
+
+  navToApp: function() {
+    this.props.navigator.push(App);
+  },
+})
 
 //////////////////// MESSAGES //////////////////////////
 
@@ -423,11 +459,11 @@ var DatePickerExample = React.createClass({
     };
   },
 
+  
   onDateChange: function(date) {
     this.setState({date: date});
     gDate = this.state.date;  
   },
-
   onTimezoneChange: function(event) {
     var offset = parseInt(event.nativeEvent.text, 10);
     if (isNaN(offset)) {
@@ -843,7 +879,7 @@ var ChoreContainer = React.createClass({
     })
     .then(function(data) {
       this.loadChores();
-      socket.emit('chore', chore);
+      //socket.emit('chore', chore);
     })
   },
 
@@ -907,12 +943,85 @@ var ChoreContainer = React.createClass({
   }
 });
 
+var MyView = React.createClass({
+  navToApp: function() {
+    this.props.navigator.push({
+      component: App
+    });
+  },
+
+  render: function(){
+    console.log('My View render triggered');
+    return (
+        <View style={styles.navWrapper}>
+        <Text
+        onPress={this.navToApp}>
+          Login with Venmo
+        </Text>
+      </View>
+    );
+  }
+});
+
+var MyViewTwo = React.createClass({
+  navToApp: function() {
+    this.props.navigator.push({
+      component: MyViewTwo,
+      title: 'Logged in alright'
+    });
+  },
+
+  render: function(){
+    console.log('My View render triggered');
+    return (
+        <View style={styles.navWrapper}>
+        <Text
+        onPress={this.navToApp}>
+          Logged in
+        </Text>
+      </View>
+    );
+  }
+});
+
+///////////////////// NAVIGATOR ///////////////////////
+
+var Navigator = React.createClass ({
+  render: function() {
+    return (
+      <NavigatorIOS
+        style={styles.navContainer}
+        initialRoute={{
+          component: MyView,
+          title: 'My NavigatorIOS test',
+          passProps: { myProp: 'foo' },
+      }}/>
+    );
+  },
+});
+
+
+
 ////////////////////// STYLES ////////////////////////////
 
 const styles = StyleSheet.create({
+  navContainer: {
+    flex: 1,
+  },
+  navWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5FCFF',
+    marginTop: 80
+  },
+  navWelcome: {
+    fontSize: 20,
+    textAlign: 'center',
+    margin: 10,
+  },
   container: {
     flex: 1,
-    paddingTop: 25,
+    marginTop: 65,
     justifyContent: 'center',
     alignItems: 'stretch',
     backgroundColor: '#F5FCFF',
@@ -986,7 +1095,10 @@ const styles = StyleSheet.create({
   },
   choreEntry: {
     flexDirection: 'row'
+  },
+  wrapper: {
+    flex: 1,
   }
 });
 
-AppRegistry.registerComponent('ObieObieOh', () => App);
+AppRegistry.registerComponent('ObieObieOh', () => Navigator);
