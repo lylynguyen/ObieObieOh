@@ -3,7 +3,8 @@ var jwt = require('jwt-simple');
 
 module.exports = {
   getUsersInHouse: function (req, res) {
-    var token = JSON.parse(jwt.decode(JSON.parse(req.headers.token), process.env.secret_code));
+    var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    console.log('GET USERS IN HOUSE TOKEN: ', token);
     var params = [token.houseId];
     userModel.getUsersInHouse(params, function(err, results) {
       if (err) {
@@ -64,9 +65,36 @@ module.exports = {
     })
   },
   getUserImage: function(req, res) {
-    var token = JSON.parse(jwt.decode(JSON.parse(req.headers.token), process.env.secret_code));
-    var params = token.userid;
+    console.log('get user image: ', req.headers.token);
+    var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    console.log('GET USER IMAGE TOKEN: ', token);
+    var params = [token.userid];
     userModel.getUserImage(params, function(err, results) {
+      if (err) {
+        console.log(err);
+        res.sendStatus(500);
+      } else {
+        res.json(results);
+      }
+    })
+
+  },
+  leaveHouse: function(req, res) {
+    var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    console.log('LEAVE HOUSE TOKEN: ', token);
+    var params = [token.userid];
+    userModel.leaveHouse(params, function(err, results) {
+      if (err) {
+        res.sendStatus(500);
+      } else {
+        res.json(results);
+      }
+    })
+  },
+  getHouseIdwithUserId: function(req, res) {
+    var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    params = [token.userid];
+    userModel.getHouseIdwithUserId(params, function(err, results) {
       if (err) {
         res.sendStatus(500);
       } else {

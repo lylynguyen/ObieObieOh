@@ -566,44 +566,44 @@ var CategoryDrop = React.createClass({
   }
 });
 
-var FinanceContainer = React.createClass({
-  getInitialState: function() {
-    showBills: true,
-    showPayments: false,
-    showCreate: false
-  },
+// var FinanceContainer = React.createClass({
+//   getInitialState: function() {
+//     showBills: true,
+//     showPayments: false,
+//     showCreate: false
+//   },
 
-  togglePayments: function() {
-    if(this.state.showBills) {
-      this.setState({showBills: !this.state.showBills})
-    } else if ()
-    this.setState({showPayments: !this.state.showPayments})
-  },
+//   togglePayments: function() {
+//     if(this.state.showBills) {
+//       this.setState({showBills: !this.state.showBills})
+//     } else if ()
+//     this.setState({showPayments: !this.state.showPayments})
+//   },
 
-  renderPayments: function() {
-    if(this.state.showPayments) {
-      return <PaymentContainer />
-    }
-  },
+//   renderPayments: function() {
+//     if(this.state.showPayments) {
+//       return <PaymentContainer />
+//     }
+//   },
 
-  render: function() {
-    //nav bar messages, finance, and chores,
-    //Finance
-    //Big empty space that will hold bills, payments or form
-    {this.renderPayments()}
-    {this.renderForm()}
-    //buttons to dictate what goes into empty space 
-    <TouchableHighlight onPress={this.togglePayments}> 
-      <Text>Payment</Text>
-    </TouchableHighlight>
-  }
-})
+//   render: function() {
+//     //nav bar messages, finance, and chores,
+//     //Finance
+//     //Big empty space that will hold bills, payments or form
+//     {this.renderPayments()}
+//     {this.renderForm()}
+//     //buttons to dictate what goes into empty space 
+//     <TouchableHighlight onPress={this.togglePayments}> 
+//       <Text>Payment</Text>
+//     </TouchableHighlight>
+//   }
+// })
 
-var PaymentContainer = React.createClass({
-  render: function() {
-    <Text>This is the Payment container</Text>
-  }
-});
+// var PaymentContainer = React.createClass({
+//   render: function() {
+//     <Text>This is the Payment container</Text>
+//   }
+// });
 
 var ChoreForm = React.createClass({
   getInitialState: function() {

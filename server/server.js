@@ -23,7 +23,7 @@ var Venmo_Client_ID = process.env.venmo_client_ID;
 var Venmo_Client_SECRET = process.env.venmo_client_secret;
 var Venmo_Callback_URL = process.env.Base_URL +'/auth/venmo/callback';
 
-app.set('port', (process.env.PORT || 8081));
+app.set('port', (process.env.PORT || 8080));
 
 var server = app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
@@ -99,7 +99,7 @@ passport.use(new VenmoStrategy({
                 return done(error);
               } else {
                 jtObj['userid']=body;
-                var jwtObj = jwt.encode(JSON.stringify(jtObj), process.env.secret_code);
+                var jwtObj = jwt.encode(jtObj, process.env.secret_code);
                 return done(null, jwtObj);
               }
           });
@@ -121,7 +121,7 @@ passport.use(new VenmoStrategy({
                 jtObj['userid'] = userId;
                 jtObj['houseId'] = houseId;
                 jtObj['isLandlord'] = isLandlord;
-                var jwtObj = jwt.encode(JSON.stringify(jtObj), process.env.secret_code);
+                var jwtObj = jwt.encode(jtObj, process.env.secret_code);
                 return done(null, jwtObj);
               })
 
