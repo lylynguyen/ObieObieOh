@@ -142,7 +142,8 @@ var MessageContainer = React.createClass({
   }
 });
 
-var BillContainer = React.createClass({
+var BillContainer = React.createClass(
+{
   getInitialState: function() {
     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
@@ -150,6 +151,14 @@ var BillContainer = React.createClass({
       dataSource: ds.cloneWithRows(bills)
     }
   },
+
+  //fetch users
+
+  //loadBill 
+
+  // submitBill: function(bill) {
+    // post to  db
+  // }
 
   render: function () {
     return (
@@ -227,13 +236,14 @@ var FinanceContainer = React.createClass({
     this.setState({showCreateBill: !this.state.showCreateBill})
   },
 
- viewBillsButton: function() {
-  return <TouchableHighlight underlayColor="gray"
+  viewBillsButton: function() {
+    return <TouchableHighlight underlayColor="gray"
     onPress={this.toggleBills}
   >
     <Text>Bills</Text>
     </TouchableHighlight>
- },
+  },
+
 
  viewPaymentsButton: function() {
   return <TouchableHighlight underlayColor="gray"
@@ -299,7 +309,7 @@ var FinanceContainer = React.createClass({
  renderCreateBill: function() {
   if(this.state.showCreateBill){
     return (
-      <CreateBill/>
+      <CreateBill sendBill = {this.sendBill} />
     )
   }
  },
@@ -345,7 +355,7 @@ var DatePickerExample = React.createClass({
 
   onDateChange: function(date) {
     this.setState({date: date});
-    gDate = this.state.date;  
+    gDate = this.state.date;
   },
 
   onTimezoneChange: function(event) {
@@ -378,16 +388,17 @@ var DatePickerExample = React.createClass({
     );
   },
 });
+var gDate;
 
 var CreateBill = React.createClass({
   getInitialState: function() {
     return {
       name:'',
       total:'',
-      Date:'',
+      date: gDate,
+      bills: bills,
       showDate: false,
-      showCustomSplit: false,
-      users: users,
+      showCustomSplit: false
     }
   },
 
@@ -400,6 +411,16 @@ var CreateBill = React.createClass({
       return <DatePickerExample/>
     }
   },
+
+  setDateButton: function() {
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.toggleDate}
+      style={border('black')}>
+      <Text>Set Date</Text>
+    ></TouchableHighlight>
+  },
+
   // addBill: function(bill) {
   //   fetch(process.env.Base_URL + '/payment/bill', {
   //     method: 'POST',
@@ -416,6 +437,24 @@ var CreateBill = React.createClass({
   //     socket.emit('bill');
   //     })
   // },
+
+  addBill: function() {
+    var billObject = {
+      name: this.state.name,
+      total: this.state.total,
+      date: gDate,
+    }
+    bills.push(billObject);
+  },
+
+  sendBillButton: function() {
+    return <TouchableHighlight 
+    underlayColor='gray'
+    onPress={this.addBill}><Text>Submit Bill</Text>
+    
+    </TouchableHighlight>
+  },
+
   toggleCustomSplit: function() {
     this.setState({showCustomSplit: !this.state.showDate})
   },
@@ -432,17 +471,18 @@ var CreateBill = React.createClass({
     <View>
       <Text>Bill: </Text>
         <TextInput
-          onChangeText={(text) => this.setState({text})}
-          value={this.state.choreName}
+          onChangeText={(name) => this.setState({name})}
+          value={this.state.name}
           rejectResponderTermination={false}
           style={styles.textInput}/>
         {this.renderDate()}
       <Text>Total: </Text>
         <TextInput
-          onChangeText={(text) => this.setState({text})}
-          value={this.state.choreName}
+          onChangeText={(total) => this.setState({total})}
+          value={this.state.total}
           rejectResponderTermination={false}
           style={styles.textInput}/>
+        <View>{this.sendBillButton()}</View>
         <TouchableHighlight onPress={this.toggleDate}>
           <Text>Due Date</Text>
         </TouchableHighlight>
@@ -478,7 +518,7 @@ var CustomSplitContainer = React.createClass({
       <View>
         <View>{userlist}</View>
         <TouchableHighlight>
-          <Text>Submit</Text>
+          <Text onPress={this.addBill}>Submit</Text>
         </TouchableHighlight>
       </View>
     )
