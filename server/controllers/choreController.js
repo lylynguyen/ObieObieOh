@@ -3,13 +3,14 @@ var jwt = require('jwt-simple');
 
 module.exports = {
   get: function (req, res) {
-    var token = (jwt.decode(req.headers.token, process.env.secret_code));
-    console.log('GET CHORES TOKEN: ', token);
-    var params = [token.houseId];
-    choreModel.get(params, function (err, results) {
+    // var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    // console.log('GET CHORES TOKEN: ', token);
+    // var params = [token.houseId];
+    choreModel.get(function (err, results) {
       if (err) {
         res.sendStatus(500);
       }
+      console.log('IN THE CONTROLLER')
       res.json(results);
     });
   },

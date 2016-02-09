@@ -218,7 +218,7 @@ var App = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.container, border('black')]}>
+      <View style={[styles.container]}>
         {/*<Navbar />
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
@@ -236,7 +236,7 @@ var App = React.createClass({
 var Navbar = React.createClass({
   render: function() {
     return (
-      <View style={[styles.navbar, border('green')]}>
+      <View style={[styles.navbar]}>
         <Text>Navbar</Text>
       </View>
     )
@@ -339,12 +339,12 @@ var MessageContainer = React.createClass({
   //consider adding date to the message entry 
   renderMessageEntry: function(rowData) {
     return (
-      <View style={[styles.messageEntry, border('black')]}>
-        <Text>
-          Name: {rowData.name}
+      <View style={[styles.messageEntry]}>
+        <Text style={{fontStyle: 'italic', fontWeight: 'bold'}}>
+          {rowData.name}
         </Text>
         <Text>
-          Message: {rowData.text}
+          {rowData.text}
         </Text>
       </View>
     )
@@ -352,7 +352,7 @@ var MessageContainer = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.messageContainer, border('red')]}>
+      <View style={[styles.messageContainer]}>
         <Text style={styles.viewTitle}>Messages</Text>
         <ListView
           dataSource={this.state.dataSource}
@@ -389,7 +389,7 @@ var MessageForm = React.createClass({
       onPress={this.addMessage}
       style={[styles.sendMessageButton]}
       >
-      <Text>
+      <Text style={{padding: 2, color: 'white'}}>
         Send Message
       </Text>
     </TouchableHighlight>
@@ -397,7 +397,7 @@ var MessageForm = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.formTest, border('blue')]}>
+      <View style={[styles.formTest]}>
         <TextInput
           //updates state text, which will be used to submit
           //this message
@@ -406,7 +406,7 @@ var MessageForm = React.createClass({
           rejectResponderTermination={false}
           style={styles.textInput}
         />
-        <View style={[styles.buttonContainer, border('red')]}>
+        <View style={[styles.buttonContainer]}>
           {this.sendMessageButton()}
         </View>
       </View>
@@ -759,7 +759,7 @@ var ChoreForm = React.createClass({
       onPress={this.addChore}
       style={[styles.sendMessageButton]}
       >
-      <Text>
+      <Text style={{padding: 2, color: 'white'}}>
         Submit Chore
       </Text>
     </TouchableHighlight>
@@ -776,13 +776,13 @@ var ChoreForm = React.createClass({
           {this.setCategoryButton()}
           {this.setDateButton()}
         </View>
-        <View style={[styles.formTest, border('blue')]}>
+        <View style={[styles.formTest]}>
           <TextInput
             onChangeText={(text) => this.setState({text})}
             value={this.state.choreName}
             rejectResponderTermination={false}
             style={styles.textInput}/>
-        <View style={[styles.buttonContainer, border('red')]}>
+        <View style={[styles.buttonContainer]}>
           {this.sendChoreButton()}
         </View>
       </View>
@@ -833,17 +833,25 @@ var ChoreContainer = React.createClass({
   },
 
   loadChores: function() {
+    console.log('LOANDING CHORES')
     //verified that this was triggered on comp mount 
-    fetch(process.env.Base_URL + '/chores/', {
+    fetch('http://localhost:8080/chores/', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       }
     })
-    .then(function(chores) {
-      this.setState({chores: chores});
+    .then(function(response) {
+      response.json().then(function(data) { 
+        console.log('CHORES', data); 
+        //data is an array of four users
+        chores = data; 
+      });
+    })
+    .catch(function() {
+      console.log('too bad');
     })
   },
 
@@ -877,12 +885,12 @@ var ChoreContainer = React.createClass({
 
   submitChore: function(chore) {
     //verified, receiving correct choreobj and arriving here properly
-    fetch(process.env.Base_URL + '/chores', {
+    fetch('http://localhost:8080/chores', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       },
       body: JSON.stringify(chore)
     })
@@ -898,12 +906,12 @@ var ChoreContainer = React.createClass({
     //we want to call this when an item in the chore list is completed
     //big issue is understanding listview better and being able to access
     //proper chore. 
-    fetch(process.env.Base_URL + '/chores/' + this.props.chore.id, {
+    fetch('http://localhost:8080/chores/' + this.props.chore.id, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       }
     })
     .then(function(data) {
@@ -914,31 +922,31 @@ var ChoreContainer = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.messageContainer, border('red')]}>
+      <View style={[styles.messageContainer]}>
         <Text style={styles.viewTitle}>Chores</Text>
         <ListView
           dataSource={this.state.dataSource}
           renderRow={(rowData) => (
-            <View style={[styles.choreEntry, border('black')]}>
-              <View>
-                <Text>
-                  Name: {rowData.name}
+            <View style={[styles.choreEntry]}>
+              <View style={[styles.choreData]}>
+                <Text style={{fontStyle: 'italic', fontWeight: 'bold'}}>
+                  {rowData.name} ~ {rowData.category}
                 </Text>
                 <Text>
-                  Chore: {rowData.choreName}
+                  {rowData.choreName}
                 </Text>
                 <Text>
-                  Date: {rowData.date}
-                </Text>
-                <Text>
-                  Category: {rowData.category}
+                  Complete by: {rowData.date}
                 </Text>
               </View>
-              <View style={{alignItems: 'center'}}>
-                <Text 
-                onPress={this.updateChoreStatus}>
-                  Done?
-                </Text>
+              <View style={[styles.doneButtonCont]}>
+                <View style={[styles.doneButton]}>
+                  <Text 
+                  style={{color: 'white'}}
+                  onPress={this.updateChoreStatus}>
+                    Done?
+                  </Text>
+                </View>
               </View>
             </View>
           )}
@@ -1061,7 +1069,8 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 1,
     width: 280,
-    alignSelf: 'center'
+    alignSelf: 'center',
+    marginTop: 10
   },
   buttonContainer: {
     flex: 1,
@@ -1072,7 +1081,10 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: 'green',
+    margin: 10,
+    borderRadius: 5
   },
   setDateButton: {
     borderWidth: .5,
@@ -1094,6 +1106,8 @@ const styles = StyleSheet.create({
   dropdown: {
     flexDirection:'row',
     borderColor: 'black',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1
   },
   floatView: {
@@ -1105,7 +1119,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'green',
   },
   choreEntry: {
-    flexDirection: 'row'
+    flexDirection: 'row',
+    marginLeft: 5,
+    marginRight: 5,
+    marginTop: 1,
+    marginBottom: 1,
+    backgroundColor: 'green'
+  },
+  messageEntry: {
+    marginLeft: 5,
+    marginRight: 5,
+    marginTop: 1,
+    marginBottom: 1,
+    backgroundColor: 'lightgray',
+    padding: 5
   },
   wrapper: {
     flex: 1,
@@ -1120,7 +1147,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'green',
     borderRadius: 10
-  }
+  },
+  doneButtonCont: {
+    flex: 1.7,
+    // alignItems: 'stretch',
+    // justifyContent: 'space-around',
+  },
+  doneButton: {
+    //flex: 1,
+    marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'center'
+    // alignItems: 'center',
+    // justifyContent: 'center'
+  },
+  choreData: {
+    padding: 2,
+    flex: 9,
+    backgroundColor: 'lightgray'
+  },
 });
 
 AppRegistry.registerComponent('ObieObieOh', () => Navigator);
