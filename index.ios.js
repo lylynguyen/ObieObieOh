@@ -143,9 +143,9 @@ var MessageContainer = React.createClass({
   }
 });
 
-var BillContainer = React.createClass(
-{
-  getInitialState: function() {
+
+var BillContainer = React.createClass({
+  getInitialState: function(){
     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
       bills: bills,
@@ -153,26 +153,64 @@ var BillContainer = React.createClass(
     }
   },
 
-  render: function () {
+  renderBillEntry: function(rowData){
     return (
-      <View style={[styles.messageContainer, border('red')]}>
-       <ListView
-        dataSource={this.state.dataSource}
-        renderRow={(rowData) => (
-          <View>
-            <Text>
-              {rowData.name}
-            </Text>
-            <Text>
-              {rowData.total}
-            </Text>
-          </View>
-        )}
-       />
+      <View style={[styles.messageEntry, border('black')]}>
+        <Text>
+          Bill Name: {rowData.name}
+        </Text>
+        <Text>
+          Total: {rowData.total}
+        </Text>
+        <Text>
+        Due Data: {rowData.date}
+        </Text>
       </View>
-    );
+    )
+  },
+
+  render: function() {
+    return (
+      <View style={[styles.paymentContainer, border('red')]}>
+        <Text style={styles.viewTitle}>Bills</Text>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={this.renderBillEntry}
+        />
+      </View>
+    )
   }
-});
+})
+
+// var BillContainer = React.createClass({
+//   getInitialState: function() {
+//     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+//     return {
+//       bills: bills,
+//       dataSource: ds.cloneWithRows(bills)
+//     }
+//   },
+
+//   render: function () {
+//     return (
+//       <View style={[styles.messageContainer, border('red')]}>
+//        <ListView
+//         dataSource={this.state.dataSource}
+//         renderRow={(rowData) => (
+//           <View>
+//             <Text>
+//               {rowData.name}
+//             </Text>
+//             <Text>
+//               {rowData.total}
+//             </Text>
+//           </View>
+//         )}
+//        />
+//       </View>
+//     );
+//   }
+// });
 
 var PaymentContainer = React.createClass({
   getInitialState: function() {
@@ -210,40 +248,7 @@ var PaymentContainer = React.createClass({
       </View>
     )
   }
-  })
-
-
-
-// var PaymentContainer = React.createClass({
-//   getInitialState: function() {
-//     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2})
-//     return {
-//       payments: payments,
-//       dataSource: ds.cloneWithRows(payments)
-//     };
-//   },
-
-//   render: function() {
-//     return (
-//       <View style={[styles.messageContainer, border('red')]}>
-//        <ListView
-//         dataSource={this.state.dataSource}
-//         renderRow={(rowData) => (
-//           <View style={[styles.messageEntry, border('black')]}>
-//             <Text >
-//               {rowData.username}
-//             </Text>
-//             <Text>
-//               {rowData.total}
-//             </Text>
-//           </View>
-//         )}
-//        />
-//       </View>
-//     );
-//   }
-// });
-
+});
 
 var FinanceContainer = React.createClass({
   getInitialState: function() {
