@@ -9,6 +9,7 @@ import React, {
   Component,
   StyleSheet,
   Text,
+  Image,
   Fetch,
   View,
   Picker,
@@ -519,7 +520,10 @@ var UserDrop = React.createClass({
   },
 
   render: function() {
-    var userList = users.map(function(user) {
+    var names = users.map(function(user) {
+      return user.name;
+    })
+    var userList = names.map(function(user) {
       return <Option>{user}</Option>
     })
     return (
@@ -799,9 +803,11 @@ var ChoreContainer = React.createClass({
     };
   },
 
+  //WORKING INTERACTION WITH THE DATABASE, NOTE HOW TO
+  //HANDLE PROMISE OBJECT BELOW 
   getUsers: function() {
     //verified that this was triggered on comp mount
-    fetch(process.env.Base_URL + '/', {
+    fetch('http://localhost:8080/users/', {
       method: 'GET',
       headers: {
         //at some point will need to set token on AsynchSt.
@@ -809,14 +815,17 @@ var ChoreContainer = React.createClass({
         //is promisified, but don't think we need here b/c 
         //we're only retrieving the value
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        'Content-Type': 'application/json'
+        //'token': AsyncStorage.getItem('obie')
       }
     })
-    .then(function(users) {
+    .then(function(response) {
+      response.json().then(function(data) { 
+        //data is an array of four users
+        users = data
+      });
       //update state users array with response
-      console.log('USERS', users);
-      this.setState({users: users});
+      // console.log('USERS FROM DB', response.status);
     })
     .catch(function() {
       console.log('nope');
@@ -943,42 +952,43 @@ var ChoreContainer = React.createClass({
   }
 });
 
-var MyView = React.createClass({
+var Login = React.createClass({
+  getInitialState: function() {
+    return {
+      email: '',
+      password: ''
+    }
+  },
+
   navToApp: function() {
+    AsyncStorage.setItem('email', this.state.email);
+    AsyncStorage.setItem('password', this.state.password); 
     this.props.navigator.push({
       component: App
     });
   },
 
   render: function(){
-    console.log('My View render triggered');
     return (
         <View style={styles.navWrapper}>
-        <Text
-        onPress={this.navToApp}>
-          Login with Venmo
-        </Text>
-      </View>
-    );
-  }
-});
-
-var MyViewTwo = React.createClass({
-  navToApp: function() {
-    this.props.navigator.push({
-      component: MyViewTwo,
-      title: 'Logged in alright'
-    });
-  },
-
-  render: function(){
-    console.log('My View render triggered');
-    return (
-        <View style={styles.navWrapper}>
-        <Text
-        onPress={this.navToApp}>
-          Logged in
-        </Text>
+          <Image
+          style={{height: 80, width: 200, marginTop: 15}}
+          source={require('./obie_logo_copy.png')} />
+          <View style={{marginTop: 10}}>
+            <Text style={{justifyContent: 'center', marginBottom: 7}}>Email: </Text>
+            <TextInput 
+            onChangeText={(email) => this.setState({email})}
+            style={[styles.textInput]} />
+          </View>
+          <View style={{marginTop: 10}}>
+            <Text style={{justifyContent: 'center', marginBottom: 7}}>Password: </Text>
+            <TextInput onChangeText={(password) => this.setState({password})} secureTextEntry={true} style={[styles.textInput]} />
+          </View>
+          <TouchableHighlight onPress={this.navToApp} style={[styles.loginButton]}>
+            <Text style={{color: 'white'}}>
+              Login
+            </Text>
+          </TouchableHighlight>
       </View>
     );
   }
@@ -992,8 +1002,8 @@ var Navigator = React.createClass ({
       <NavigatorIOS
         style={styles.navContainer}
         initialRoute={{
-          component: MyView,
-          title: 'My NavigatorIOS test',
+          component: Login,
+          title: 'Obie | Welcome Home',
           passProps: { myProp: 'foo' },
       }}/>
     );
@@ -1009,10 +1019,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   navWrapper: {
-    justifyContent: 'center',
+    flex: 1,
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-    marginTop: 80
+    marginTop: 65,
+    backgroundColor: '#F5F8FA'
   },
   navWelcome: {
     fontSize: 20,
@@ -1098,6 +1109,17 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
+  },
+  loginButton: {
+    marginTop: 30,
+    borderWidth: 2,
+    borderColor: 'black',
+    width: 280,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'green',
+    borderRadius: 10
   }
 });
 

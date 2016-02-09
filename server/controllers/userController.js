@@ -3,16 +3,24 @@ var jwt = require('jwt-simple');
 
 module.exports = {
   getUsersInHouse: function (req, res) {
-    var token = (jwt.decode(req.headers.token, process.env.secret_code));
-    console.log('GET USERS IN HOUSE TOKEN: ', token);
-    var params = [token.houseId];
-    userModel.getUsersInHouse(params, function(err, results) {
-      if (err) {
+    // var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    // console.log('GET USERS IN HOUSE TOKEN: ', token);
+    // var params = [token.houseId];
+    // userModel.getUsersInHouse(params, function(err, results) {
+    //   if (err) {
+    //     res.sendStatus(500);
+    //   } else {
+    //     res.json(results);
+    //   }
+    // });
+    userModel.getUsersInHouse(function(err, results) {
+      if(err) {
         res.sendStatus(500);
       } else {
-        res.json(results);
+        console.log('USER RESULTS', results);
+        res.json(results); 
       }
-    });
+    })
   },
 
   findUserByVenmoId: function (req, res) {
