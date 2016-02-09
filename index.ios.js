@@ -296,14 +296,6 @@ var MessageContainer = React.createClass({
     //socket.on('message', context.loadMessages);
   },
 
-  sendMessage: function(messageObj) {
-    this.state.messages.push(messageObj);
-    this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(this.state.chores),
-      messages: this.state.messages
-    })
-  },
-
   loadMessages: function() {
     console.log('LOADING MESSAGES'); 
     fetch(process.env.Base_URL + '/messages', {
@@ -398,22 +390,30 @@ var MessageForm = React.createClass({
       text: this.state.text,
       date: new Date().toString().split(' ').slice(0, 4).join(' ')
     }
+    this.setState({text: ''});
     this.props.sendMessage(messageObject);
     //need to consider how to clear user input field text
     //after submission 
   },
 
-  sendMessageButton: function() {
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.addMessage}
-      style={[styles.sendMessageButton]}
-      >
-      <Text style={{padding: 2, color: 'white'}}>
-        Send Message
-      </Text>
-    </TouchableHighlight>
-  },
+  // sendMessageButton: function() {
+  //   return <TouchableHighlight
+  //     underlayColor="gray"
+  //     onPress={this.addMessage}
+  //     style={[styles.sendMessageButton]}
+  //     >
+  //     <Text style={{padding: 2, color: 'white'}}>
+  //       Send Message
+  //     </Text>
+  //   </TouchableHighlight>
+  // },
+
+    sendMessageButton: function() {
+      return (<Text style={{padding: 2, color: 'black'}}
+        onPress={this.addMessage}>
+        Send 
+      </Text>)
+    },
 
     renderKeyboard: function() {
       if(this.state.showKeyboard) {
@@ -429,17 +429,19 @@ var MessageForm = React.createClass({
   render: function() {
     return (
       <View style={[styles.formTest]}>
-        <TextInput
-          //updates state text, which will be used to submit
-          //this message
-          onFocus={this.toggleKeyboard}
-          onChangeText={(text) => this.setState({text})}
-          value={this.state.text}
-          rejectResponderTermination={false}
-          style={styles.textInput}
-        />
-        <View style={[styles.buttonContainer]}>
-          {this.sendMessageButton()}
+        <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+          <View style={{flex: 5}}>
+            <TextInput 
+              placeholder='Enter message...'
+              onFocus={this.toggleKeyboard}
+              onChangeText={(text) => this.setState({text})}
+              value={this.state.text}
+              rejectResponderTermination={false}
+              style={[styles.messageInput]}/>
+          </View>
+          <View style={{flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 7, marginRight: 3}}>
+            {this.sendMessageButton()}
+          </View>
         </View>
         {this.renderKeyboard()}
       </View>
@@ -693,7 +695,8 @@ var ChoreForm = React.createClass({
       showDate: false, 
       showUser: false,
       showCategory: false,
-      showClose: false
+      showClose: false,
+      showKeyboard: false
     }
   },
 
@@ -775,6 +778,17 @@ var ChoreForm = React.createClass({
     </TouchableHighlight>
   },
 
+  renderKeyboard: function() {
+      if(this.state.showKeyboard) {
+        return (<View style={{height: 250}}>
+        </View>)
+      }
+    },
+
+  toggleKeyboard: function() {
+    this.setState({showKeyboard: !this.state.showKeyboard})
+  },
+
   addChore: function() {
     var choreObject = {
       name: gUser,
@@ -787,15 +801,10 @@ var ChoreForm = React.createClass({
   },
 
   sendChoreButton: function() {
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.addChore}
-      style={[styles.sendMessageButton]}
-      >
-      <Text style={{padding: 2, color: 'white'}}>
-        Submit Chore
+    return <Text style={{padding: 2, color: 'black'}}
+        onPress={this.addChore}>
+        Post 
       </Text>
-    </TouchableHighlight>
   },
   
   render: function() {
@@ -810,19 +819,45 @@ var ChoreForm = React.createClass({
           {this.setDateButton()}
         </View>
         <View style={[styles.formTest]}>
-          <TextInput
-          //updates state text, which will be used to submit
-          //this message
-          onChangeText={(choreName) => this.setState({choreName})}
-          value={this.state.choreName}
-          rejectResponderTermination={false}
-          style={styles.textInput}/>
-        <View style={[styles.buttonContainer]}>
-          {this.sendChoreButton()}
+          <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+            <View style={{flex: 5}}>
+              <TextInput
+              //updates state text, which will be used to submit
+              //this message
+              placeholder='Enter chore name...'
+              onFocus={this.toggleKeyboard}
+              onChangeText={(choreName) => this.setState({choreName})}
+              value={this.state.choreName}
+              rejectResponderTermination={false}
+              style={styles.messageInput}/>
+            </View>
+            <View style={{flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 7, marginRight: 3}}>
+              {this.sendChoreButton()}
+            </View>
+          </View>
         </View>
-      </View>
+      {this.renderKeyboard()}
     </View>
     )
+
+    // return (
+    //   <View style={[styles.formTest]}>
+    //     <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+    //       <View style={{flex: 5}}>
+    //         <TextInput 
+    //           onFocus={this.toggleKeyboard}
+    //           onChangeText={(text) => this.setState({text})}
+    //           value={this.state.text}
+    //           rejectResponderTermination={false}
+    //           style={[styles.messageInput]}/>
+    //       </View>
+    //       <View style={{flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 7, marginRight: 3}}>
+    //         {this.sendMessageButton()}
+    //       </View>
+    //     </View>
+    //     {this.renderKeyboard()}
+    //   </View>
+    // )
   }
 });
 
@@ -1123,10 +1158,30 @@ const styles = StyleSheet.create({
   },
   textInput: {
     paddingLeft: 8,
-    height: 40,
+    height: 33,
     borderColor: 'gray',
     borderWidth: 1,
     width: 280,
+    alignSelf: 'center',
+    marginTop: 10,
+    borderRadius: 5
+  },
+  messageInput: {
+    paddingLeft: 8,
+    height: 33,
+    borderColor: 'gray',
+    borderWidth: 1,
+    width: 250,
+    alignSelf: 'center',
+    marginTop: 10,
+    borderRadius: 5
+  },
+  choreInput: {
+    paddingLeft: 8,
+    height: 33,
+    borderColor: 'gray',
+    borderWidth: 1,
+    width: 225,
     alignSelf: 'center',
     marginTop: 10,
     borderRadius: 5
@@ -1171,6 +1226,7 @@ const styles = StyleSheet.create({
     flexDirection:'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: 5
   },
   floatView: {
     position: 'absolute',
