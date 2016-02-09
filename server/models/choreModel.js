@@ -1,9 +1,11 @@
 var db = require('../db');
 
 module.exports = {
-  get: function (params, callback) {
-    var queryStr = "SELECT Users.name, Chores.id, Chores.name as chorename, Chores.category, Chores.completed, Chores.dueDate, Chores.houseId from Chores LEFT OUTER JOIN Users ON (Chores.UserId = Users.id) WHERE Chores.houseId=? and completed=0";
-    db.query(queryStr, params, function(err, results) {
+  get: function (callback) {
+    //var queryStr = "SELECT Users.name, Chores.id, Chores.name as chorename, Chores.category, Chores.completed, Chores.dueDate, Chores.houseId from Chores LEFT OUTER JOIN Users ON (Chores.UserId = Users.id) WHERE Chores.houseId=? and completed=0";
+    var queryStr = 'SELECT * from chores'; 
+    console.log('IN DA MODEL');
+    db.query(queryStr, function(err, results) {
       callback(err, results);
     });
   },

@@ -9,6 +9,7 @@ import React, {
   Component,
   StyleSheet,
   Text,
+  Image,
   Fetch,
   View,
   Picker,
@@ -36,14 +37,14 @@ import {createStore} from 'redux';
 
 var ScrollableTabView = require('react-native-scrollable-tab-view');
 
-var messages = [{name: "Lyly", text: "a;lshee hksehkahfj askhfakjse ashkjehakjes afeksjfhk esksjks jfhskfe"},{name: "Boner", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Joey", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."},{name: "Nick", text:"Lorem ipsum dolor sit amet, consectetur adipisicing elit."}]
+var messages = []
 // var messages = [];
 var chores = [
-  {category: 'kitchen', name: 'Joey', choreName: 'eat the cheese'}, 
-  {category: 'Bathroom', name: 'Justin', choreName: 'buy new stall for HR'}
+  //{category: 'kitchen', name: 'Joey', choreName: 'eat the cheese'}, 
+  //{category: 'Bathroom', name: 'Justin', choreName: 'buy new stall for HR'}
 ]
 
-var users = ["Joey", "Justin", "Nick", "Lyly"];
+var users = [];
 
 var gDate; 
 var gUser;
@@ -217,7 +218,7 @@ var App = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.container, border('black')]}>
+      <View style={[styles.container]}>
         {/*<Navbar />
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
@@ -235,7 +236,7 @@ var App = React.createClass({
 var Navbar = React.createClass({
   render: function() {
     return (
-      <View style={[styles.navbar, border('green')]}>
+      <View style={[styles.navbar]}>
         <Text>Navbar</Text>
       </View>
     )
@@ -284,7 +285,8 @@ var MessageContainer = React.createClass({
     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
       messages: messages,
-      dataSource: ds.cloneWithRows(messages)
+      dataSource: ds.cloneWithRows(messages),
+      showKeyboard: false
     };
   },
 
@@ -333,17 +335,25 @@ var MessageContainer = React.createClass({
       dataSource: this.state.dataSource.cloneWithRows(this.state.messages),
       messages: this.state.messages
     })
+    this.setState({
+      choreName: ''
+    })
   },
 
   //consider adding date to the message entry 
   renderMessageEntry: function(rowData) {
     return (
-      <View style={[styles.messageEntry, border('black')]}>
-        <Text>
-          Name: {rowData.name}
-        </Text>
-        <Text>
-          Message: {rowData.text}
+      <View style={[styles.messageEntry]}>
+        <View style={{flexDirection:'row', flex: 1}}>
+          <Text style={{flex: 5, fontStyle: 'italic'}}>
+            {rowData.name}
+          </Text>
+          <Text style={{fontStyle: 'italic'}}>
+            {rowData.date}
+          </Text>
+        </View>
+        <Text style={{fontWeight: 'bold'}}>
+          {rowData.text}
         </Text>
       </View>
     )
@@ -351,13 +361,13 @@ var MessageContainer = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.messageContainer, border('red')]}>
+      <View style={[styles.messageContainer]}>
         <Text style={styles.viewTitle}>Messages</Text>
         <ListView
           dataSource={this.state.dataSource}
           renderRow={this.renderMessageEntry}
         />
-        <MessageForm submitMessage={this.submitMessage} />
+        <MessageForm sendMessage={this.sendMessage} />
       </View>
     )
   }
@@ -366,48 +376,74 @@ var MessageContainer = React.createClass({
 var MessageForm = React.createClass({
   getInitialState: function() {
     return {
-      text: 'hi'
+      text: '',
+      showKeyboard: false
     }
   },
 
   addMessage: function() {
+    this.toggleKeyboard();
     var messageObject = {
       //eventually need to replace with userId from token
-      name: 'Justin', 
+      name: 'Joey Holland', 
       //this is good, updated by user input
-      text: this.state.text
+      text: this.state.text,
+      date: new Date().toString().split(' ').slice(0, 4).join(' ')
     }
-    this.props.submitMessage(messageObject);
+    this.setState({text: ''});
+    this.props.sendMessage(messageObject);
     //need to consider how to clear user input field text
     //after submission 
   },
 
-  sendMessageButton: function() {
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.addMessage}
-      style={[styles.sendMessageButton]}
-      >
-      <Text>
-        Send Message
-      </Text>
-    </TouchableHighlight>
+  // sendMessageButton: function() {
+  //   return <TouchableHighlight
+  //     underlayColor="gray"
+  //     onPress={this.addMessage}
+  //     style={[styles.sendMessageButton]}
+  //     >
+  //     <Text style={{padding: 2, color: 'white'}}>
+  //       Send Message
+  //     </Text>
+  //   </TouchableHighlight>
+  // },
+
+    sendMessageButton: function() {
+      return (<Text style={{padding: 2, color: 'black'}}
+        onPress={this.addMessage}>
+        Send 
+      </Text>)
+    },
+
+    renderKeyboard: function() {
+      if(this.state.showKeyboard) {
+        return (<View style={{height: 250}}>
+        </View>)
+      }
+    },
+
+  toggleKeyboard: function() {
+    this.setState({showKeyboard: !this.state.showKeyboard})
   },
 
   render: function() {
     return (
-      <View style={[styles.formTest, border('blue')]}>
-        <TextInput
-          //updates state text, which will be used to submit
-          //this message
-          onChangeText={(text) => this.setState({text})}
-          value={this.state.text}
-          rejectResponderTermination={false}
-          style={styles.textInput}
-        />
-        <View style={[styles.buttonContainer, border('red')]}>
-          {this.sendMessageButton()}
+      <View style={[styles.formTest]}>
+        <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+          <View style={{flex: 5}}>
+            <TextInput 
+              placeholder='Enter message...'
+              onFocus={this.toggleKeyboard}
+              onChangeText={(text) => this.setState({text})}
+              value={this.state.text}
+              rejectResponderTermination={false}
+              style={[styles.messageInput]}/>
+          </View>
+          <View style={{flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 7, marginRight: 3}}>
+            {this.sendMessageButton()}
+          </View>
         </View>
+        {this.renderKeyboard()}
       </View>
     )
   }
@@ -482,7 +518,7 @@ var DatePickerExample = React.createClass({
             timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
             onDateChange={this.onDateChange}
             minuteInterval={30}
-            style={[{height: 320}]}
+            style={[{height: 405}]}
           />
         </View>
         <View 
@@ -519,12 +555,15 @@ var UserDrop = React.createClass({
   },
 
   render: function() {
-    var userList = users.map(function(user) {
+    var names = users.map(function(user) {
+      return user.name;
+    })
+    var userList = names.map(function(user) {
       return <Option>{user}</Option>
     })
     return (
       <View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 320}}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 405}}>
           <Select
             width={250}
             ref="SELECT1"
@@ -574,7 +613,7 @@ var CategoryDrop = React.createClass({
   render: function() {
     return (
       <View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 320 }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 405 }}>
           <Select
             width={250}
             ref="SELECT2"
@@ -646,7 +685,7 @@ var ChoreForm = React.createClass({
     console.log('CHORE FORM', this);
     return {
       //need the text that the user inputs for choreName
-      choreName: 'hola',
+      choreName: '',
       //need the user who will perform the chore
       user: '',
       category: '',
@@ -656,7 +695,8 @@ var ChoreForm = React.createClass({
       showDate: false, 
       showUser: false,
       showCategory: false,
-      showClose: false
+      showClose: false,
+      showKeyboard: false
     }
   },
 
@@ -708,7 +748,7 @@ var ChoreForm = React.createClass({
       onPress={this.toggleDate}
       style={[styles.setDateButton, styles.dropdown]}
       >
-      <Text>
+      <Text style={{color: 'white'}}>
         Set Date
       </Text>
     </TouchableHighlight>
@@ -720,7 +760,7 @@ var ChoreForm = React.createClass({
       onPress={this.toggleUser}
       style={[styles.setDateButton, styles.dropdown]}
       >
-      <Text>
+      <Text style={{color: 'white'}}>
         User
       </Text>
     </TouchableHighlight>
@@ -732,10 +772,21 @@ var ChoreForm = React.createClass({
       onPress={this.toggleCategory}
       style={[styles.setDateButton, styles.dropdown]}
       >
-      <Text>
+      <Text style={{color: 'white'}}>
         Category
       </Text>
     </TouchableHighlight>
+  },
+
+  renderKeyboard: function() {
+      if(this.state.showKeyboard) {
+        return (<View style={{height: 250}}>
+        </View>)
+      }
+    },
+
+  toggleKeyboard: function() {
+    this.setState({showKeyboard: !this.state.showKeyboard})
   },
 
   addChore: function() {
@@ -746,24 +797,19 @@ var ChoreForm = React.createClass({
       date: gDate.toString().split(' ').slice(0, 4).join(' '),
       completed: false
     }
-    this.props.submitChore(choreObject);
+    this.props.sendChore(choreObject);
   },
 
   sendChoreButton: function() {
-    return <TouchableHighlight
-      underlayColor="gray"
-      onPress={this.addChore}
-      style={[styles.sendMessageButton]}
-      >
-      <Text>
-        Submit Chore
+    return <Text style={{padding: 2, color: 'black'}}
+        onPress={this.addChore}>
+        Post 
       </Text>
-    </TouchableHighlight>
   },
   
   render: function() {
     return (
-      <View>
+      <View style={{paddingTop: 10}}>
         {this.renderUser()}
         {this.renderCategory()}
         {this.renderDate()}
@@ -772,18 +818,46 @@ var ChoreForm = React.createClass({
           {this.setCategoryButton()}
           {this.setDateButton()}
         </View>
-        <View style={[styles.formTest, border('blue')]}>
-          <TextInput
-            onChangeText={(text) => this.setState({text})}
-            value={this.state.choreName}
-            rejectResponderTermination={false}
-            style={styles.textInput}/>
-        <View style={[styles.buttonContainer, border('red')]}>
-          {this.sendChoreButton()}
+        <View style={[styles.formTest]}>
+          <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+            <View style={{flex: 5}}>
+              <TextInput
+              //updates state text, which will be used to submit
+              //this message
+              placeholder='Enter chore name...'
+              onFocus={this.toggleKeyboard}
+              onChangeText={(choreName) => this.setState({choreName})}
+              value={this.state.choreName}
+              rejectResponderTermination={false}
+              style={styles.messageInput}/>
+            </View>
+            <View style={{flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 7, marginRight: 3}}>
+              {this.sendChoreButton()}
+            </View>
+          </View>
         </View>
-      </View>
+      {this.renderKeyboard()}
     </View>
     )
+
+    // return (
+    //   <View style={[styles.formTest]}>
+    //     <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+    //       <View style={{flex: 5}}>
+    //         <TextInput 
+    //           onFocus={this.toggleKeyboard}
+    //           onChangeText={(text) => this.setState({text})}
+    //           value={this.state.text}
+    //           rejectResponderTermination={false}
+    //           style={[styles.messageInput]}/>
+    //       </View>
+    //       <View style={{flex: 1, alignSelf: 'center', alignItems: 'center', marginTop: 7, marginRight: 3}}>
+    //         {this.sendMessageButton()}
+    //       </View>
+    //     </View>
+    //     {this.renderKeyboard()}
+    //   </View>
+    // )
   }
 });
 
@@ -795,13 +869,16 @@ var ChoreContainer = React.createClass({
       chores: chores,
       dataSource: ds.cloneWithRows(chores),
       //will be replaced by getUsers() called on compdidmount
-      users: []
+      users: users,
+      showAddButton: true
     };
   },
 
+  //WORKING INTERACTION WITH THE DATABASE, NOTE HOW TO
+  //HANDLE PROMISE OBJECT BELOW 
   getUsers: function() {
     //verified that this was triggered on comp mount
-    fetch(process.env.Base_URL + '/', {
+    fetch('http://localhost:8080/users/', {
       method: 'GET',
       headers: {
         //at some point will need to set token on AsynchSt.
@@ -809,14 +886,17 @@ var ChoreContainer = React.createClass({
         //is promisified, but don't think we need here b/c 
         //we're only retrieving the value
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        'Content-Type': 'application/json'
+        //'token': AsyncStorage.getItem('obie')
       }
     })
-    .then(function(users) {
+    .then(function(response) {
+      response.json().then(function(data) { 
+        //data is an array of four users
+        users = data
+      });
       //update state users array with response
-      console.log('USERS', users);
-      this.setState({users: users});
+      // console.log('USERS FROM DB', response.status);
     })
     .catch(function() {
       console.log('nope');
@@ -824,19 +904,28 @@ var ChoreContainer = React.createClass({
   },
 
   loadChores: function() {
+    console.log('LOANDING CHORES')
     //verified that this was triggered on comp mount 
-    fetch(process.env.Base_URL + '/chores/', {
+    fetch('http://localhost:8080/chores/', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       }
     })
-    .then(function(chores) {
-      this.setState({chores: chores});
+    .then(function(response) {
+      response.json().then(function(data) { 
+        //data is an array of four users
+        chores = data; 
+      });
+    })
+    .catch(function() {
+      console.log('too bad');
     })
   },
+
+
 
   componentDidMount: function() {
     //sets choreContainer state to be live users load
@@ -854,26 +943,47 @@ var ChoreContainer = React.createClass({
       dataSource: this.state.dataSource.cloneWithRows(this.state.chores),
       chores: this.state.chores
     })
+    this.toggleForm(); 
+    this.setState({showAddButton: true});
   },
 
   toggleForm: function() {
+    this.toggleAddButton(); 
     this.setState({showForm: !this.state.showForm});
   },
 
   renderForm: function() {
     if(this.state.showForm) {
-      return <ChoreForm submitChore={this.submitChore}/>
+      return <ChoreForm sendChore={this.sendChore}/>
+    }
+  },
+
+  toggleAddButton: function() {
+    this.setState({showAddButton: !this.state.showAddButton})
+  },
+
+  renderShowAddButton: function() {
+    if(this.state.showAddButton) {
+      return (
+        <View style={{alignItems: 'center', paddingBottom: 25, paddingTop: 10}} >
+          <TouchableHighlight 
+            onPress={this.toggleForm}
+            style={[styles.setDateButton]}>
+            <Text style={{color: 'white'}}>Add Chore</Text>
+          </TouchableHighlight>
+        </View>
+      )
     }
   },
 
   submitChore: function(chore) {
     //verified, receiving correct choreobj and arriving here properly
-    fetch(process.env.Base_URL + '/chores', {
+    fetch('http://localhost:8080/chores', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       },
       body: JSON.stringify(chore)
     })
@@ -889,12 +999,12 @@ var ChoreContainer = React.createClass({
     //we want to call this when an item in the chore list is completed
     //big issue is understanding listview better and being able to access
     //proper chore. 
-    fetch(process.env.Base_URL + '/chores/' + this.props.chore.id, {
+    fetch('http://localhost:8080/chores/' + this.props.chore.id, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       }
     })
     .then(function(data) {
@@ -904,81 +1014,82 @@ var ChoreContainer = React.createClass({
   },
 
   render: function() {
+    console.log('UPDATED in RENDER?', chores); 
     return (
-      <View style={[styles.messageContainer, border('red')]}>
+      <View style={[styles.messageContainer]}>
         <Text style={styles.viewTitle}>Chores</Text>
         <ListView
           dataSource={this.state.dataSource}
           renderRow={(rowData) => (
-            <View style={[styles.choreEntry, border('black')]}>
-              <View>
-                <Text>
-                  Name: {rowData.name}
+            <View style={[styles.choreEntry]}>
+              <View style={[styles.choreData]}>
+                <Text style={{fontStyle: 'italic', fontWeight: 'bold'}}>
+                  {rowData.name} ~ {rowData.category}
                 </Text>
                 <Text>
-                  Chore: {rowData.choreName}
+                  {rowData.choreName}
                 </Text>
                 <Text>
-                  Date: {rowData.date}
-                </Text>
-                <Text>
-                  Category: {rowData.category}
+                  Complete by: {rowData.date}
                 </Text>
               </View>
-              <View style={{alignItems: 'center'}}>
-                <Text 
-                onPress={this.updateChoreStatus}>
-                  Done?
-                </Text>
+              <View style={[styles.doneButtonCont]}>
+                <View style={[styles.doneButton]}>
+                  <Text 
+                  style={{color: 'white'}}
+                  onPress={this.updateChoreStatus}>
+                    Done?
+                  </Text>
+                </View>
               </View>
             </View>
           )}
         />
-        <View style={{alignItems: 'center', marginBottom: 10}} >
-          <Text onPress={this.toggleForm}>Toggle Chore Form</Text>
-        </View>
+        {this.renderShowAddButton()}
         {this.renderForm()}
       </View>
     )
   }
 });
 
-var MyView = React.createClass({
+var Login = React.createClass({
+  getInitialState: function() {
+    return {
+      email: '',
+      password: ''
+    }
+  },
+
   navToApp: function() {
+    AsyncStorage.setItem('email', this.state.email);
+    AsyncStorage.setItem('password', this.state.password);
     this.props.navigator.push({
       component: App
     });
   },
 
   render: function(){
-    console.log('My View render triggered');
     return (
         <View style={styles.navWrapper}>
-        <Text
-        onPress={this.navToApp}>
-          Login with Venmo
-        </Text>
-      </View>
-    );
-  }
-});
-
-var MyViewTwo = React.createClass({
-  navToApp: function() {
-    this.props.navigator.push({
-      component: MyViewTwo,
-      title: 'Logged in alright'
-    });
-  },
-
-  render: function(){
-    console.log('My View render triggered');
-    return (
-        <View style={styles.navWrapper}>
-        <Text
-        onPress={this.navToApp}>
-          Logged in
-        </Text>
+          <Image
+          style={{height: 80, width: 200, marginTop: 15}}
+          source={require('./obie_logo_copy.png')} />
+          <View style={{marginTop: 10}}>
+            <Text style={{justifyContent: 'center', marginBottom: 7}}>Email: </Text>
+            <TextInput 
+            autoCapitalize='none'
+            onChangeText={(email) => this.setState({email})}
+            style={[styles.textInput]} />
+          </View>
+          <View style={{marginTop: 10}}>
+            <Text style={{justifyContent: 'center', marginBottom: 7}}>Password: </Text>
+            <TextInput onChangeText={(password) => this.setState({password})} secureTextEntry={true} style={[styles.textInput]} />
+          </View>
+          <TouchableHighlight onPress={this.navToApp} style={[styles.loginButton]}>
+            <Text style={{color: 'white'}}>
+              Login
+            </Text>
+          </TouchableHighlight>
       </View>
     );
   }
@@ -990,17 +1101,16 @@ var Navigator = React.createClass ({
   render: function() {
     return (
       <NavigatorIOS
+        navigationBarHidden={true}
         style={styles.navContainer}
         initialRoute={{
-          component: MyView,
-          title: 'My NavigatorIOS test',
+          component: Login,
+          title: 'Obie | Welcome Home',
           passProps: { myProp: 'foo' },
       }}/>
     );
   },
 });
-
-
 
 ////////////////////// STYLES ////////////////////////////
 
@@ -1009,10 +1119,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   navWrapper: {
-    justifyContent: 'center',
+    flex: 1,
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-    marginTop: 80
+    paddingTop: 25,
+    backgroundColor: '#F5F8FA'
   },
   navWelcome: {
     fontSize: 20,
@@ -1021,7 +1132,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    marginTop: 65,
+    paddingTop: 25,
     justifyContent: 'center',
     alignItems: 'stretch',
     backgroundColor: '#F5FCFF',
@@ -1046,11 +1157,34 @@ const styles = StyleSheet.create({
     alignItems: 'stretch'
   },
   textInput: {
-    height: 40,
+    paddingLeft: 8,
+    height: 33,
     borderColor: 'gray',
     borderWidth: 1,
     width: 280,
-    alignSelf: 'center'
+    alignSelf: 'center',
+    marginTop: 10,
+    borderRadius: 5
+  },
+  messageInput: {
+    paddingLeft: 8,
+    height: 33,
+    borderColor: 'gray',
+    borderWidth: 1,
+    width: 250,
+    alignSelf: 'center',
+    marginTop: 10,
+    borderRadius: 5
+  },
+  choreInput: {
+    paddingLeft: 8,
+    height: 33,
+    borderColor: 'gray',
+    borderWidth: 1,
+    width: 225,
+    alignSelf: 'center',
+    marginTop: 10,
+    borderRadius: 5
   },
   buttonContainer: {
     flex: 1,
@@ -1061,14 +1195,22 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: 'green',
+    margin: 10,
+    borderRadius: 5
   },
   setDateButton: {
-    borderWidth: .5,
-    width: 101,
+    width: 85,
     height: 40,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: 'green',
+    borderWidth: 1,
+    borderColor: 'black',
+    marginLeft: 5,
+    marginRight: 5
   },
   viewTitle: {
     fontSize: 20,
@@ -1082,8 +1224,9 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     flexDirection:'row',
-    borderColor: 'black',
-    borderWidth: 1
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 5
   },
   floatView: {
     position: 'absolute',
@@ -1094,11 +1237,53 @@ const styles = StyleSheet.create({
     backgroundColor: 'green',
   },
   choreEntry: {
-    flexDirection: 'row'
+    flexDirection: 'row',
+    marginLeft: 5,
+    marginRight: 5,
+    marginTop: 1,
+    marginBottom: 1,
+    backgroundColor: 'green'
+  },
+  messageEntry: {
+    marginLeft: 5,
+    marginRight: 5,
+    marginTop: 1,
+    marginBottom: 1,
+    backgroundColor: 'lightgray',
+    padding: 5
   },
   wrapper: {
     flex: 1,
-  }
+  },
+  loginButton: {
+    marginTop: 30,
+    borderWidth: 2,
+    borderColor: 'black',
+    width: 280,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'green',
+    borderRadius: 10
+  },
+  doneButtonCont: {
+    flex: 1.7,
+    // alignItems: 'stretch',
+    // justifyContent: 'space-around',
+  },
+  doneButton: {
+    //flex: 1,
+    marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'center'
+    // alignItems: 'center',
+    // justifyContent: 'center'
+  },
+  choreData: {
+    padding: 2,
+    flex: 9,
+    backgroundColor: 'lightgray'
+  },
 });
 
 AppRegistry.registerComponent('ObieObieOh', () => Navigator);

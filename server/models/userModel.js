@@ -1,11 +1,16 @@
 var db = require('../db');
 
 module.exports = {
-  getUsersInHouse: function (params, callback) {
-    var queryStr="SELECT Users.name, Users.id, Users.email, Users.userImageUrl from Users WHERE houseId = ?";
-    db.query(queryStr, params, function(err, results) {
-      callback(err, results);
-    });
+  //note need to put params back in function args
+  getUsersInHouse: function (callback) {
+    // var queryStr="SELECT Users.name, Users.id, Users.email, Users.userImageUrl from Users WHERE houseId = ?";
+    // db.query(queryStr, params, function(err, results) {
+    //   callback(err, results);
+    // });
+    var queryStr='SELECT name from users';
+    db.query(queryStr, function(err, results) {
+      callback(err, results)
+    })
   }, 
   findUserByVenmoId: function (params, callback) {
     var queryStr = "SELECT * FROM Users WHERE venmoid=?";

@@ -65,7 +65,7 @@ module.exports = function(app, express) {
   app.post('/messages/landlord', Auth.isLoggedInUser, messageController.postToLandlordChat)
 
   //Chores
-  app.get('/chores/', Auth.isLoggedInUser, choreController.get);
+  app.get('/chores/', choreController.get);
   app.post('/chores', Auth.isLoggedInUser, choreController.post);
   app.put('/chores/:choreId', Auth.isLoggedInUser, choreController.put);
   app.delete('/chores/:choreId', Auth.isLoggedInUser, choreController.delete);
