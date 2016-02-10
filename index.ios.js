@@ -17,6 +17,7 @@ import React, {
   PickerIOS,
   DatePickerIOS,
   Dimensions,
+  AlertIOS,
 } from 'react-native';
 
 var ScrollableTabView = require('react-native-scrollable-tab-view');
@@ -119,14 +120,21 @@ var MessageContainer = React.createClass({
   },
   renderMessageEntry: function(rowData) {
     return (
-      <View style={border('black')}>
-        <Text>
-          Name: {rowData.name}
-        </Text>
-        <Text>
-          Message: {rowData.text}
+    <View style={{marginBottom: 10}}>
+      <View style={[styles.bubble]}>
+        <View style={{flexDirection:'row', flex: 1}}>
+          <Text style={{flex: 5, fontStyle: 'italic', color:'#000'}}>
+            {rowData.name}
+          </Text>
+          <Text style={{fontStyle: 'italic'}}>
+            {rowData.date}
+          </Text>
+        </View>
+        <Text style={{fontWeight: 'bold'}}>
+          {rowData.text}
         </Text>
       </View>
+    </View>
     )
   },
   render: function() {
@@ -379,7 +387,8 @@ var CreateBill = React.createClass({
       bills: bills,
       showDate: false,
       showCustomSplit: false,
-      splitEvenly: false
+      splitEvenly: false,
+      bills: []
     }
   },
 
@@ -402,13 +411,29 @@ var CreateBill = React.createClass({
     ></TouchableHighlight>
   },
 
+  componentDidMount: function() {
+    this.setState({bills: this.state.bills})
+  },
+
   addBill: function() {
     var billObject = {
       name: this.state.name,
       total: this.state.total,
-      date: gDate,
-    }
-    bills.push(billObject);
+      
+    };
+
+    fetch(process.env.Base_URL + '/bills', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(billObject)
+    })
+    .then(function(bills) {
+      this.setState({bills: bills})
+    })
+    // bills.push(billObject);
   },
 
   // sendBillButton: function() {
@@ -564,6 +589,14 @@ var CustomSplitContainer = React.createClass({
 })
 
 const styles = StyleSheet.create({
+    bubble: {
+    borderRadius: 15,
+    paddingLeft: 14,
+    paddingRight: 14,
+    paddingBottom: 10,
+    paddingTop: 8,
+    backgroundColor: '#e6e6eb'
+  },
   paymentContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -601,6 +634,8 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flex: 8,
+     paddingLeft: 10,
+    paddingRight: 10,
     justifyContent: 'center',
     alignItems: 'stretch',
     backgroundColor: '#F5FCFF',

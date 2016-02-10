@@ -44,7 +44,8 @@ module.exports = function(app, express) {
       }
     });
   });
-
+ 
+ app.post('/bills', function(){console.log('hey you')})
   //Users
   app.get('/users/', userController.getUsersInHouse);
   app.get('/users/venmo/:venmoId', userController.findUserByVenmoId);

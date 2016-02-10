@@ -17,7 +17,7 @@ var Venmo_Client_ID = process.env.venmo_client_ID;
 var Venmo_Client_SECRET = process.env.venmo_client_secret;
 var Venmo_Callback_URL = 'http://localhost:8080/auth/venmo/callback';
 
-app.set('port', (process.env.PORT || 8080));
+app.set('port', (process.env.PORT || 8081));
 
 var server = app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
