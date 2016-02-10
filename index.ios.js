@@ -325,18 +325,18 @@ var MessageContainer = React.createClass({
   },
 
   submitMessage: function(message) {
-    console.log('SUBMITTING MESSAGE'); 
+    var context = this;  
     fetch(process.env.Base_URL + '/messages', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       },
       body: JSON.stringify(message)
     })
-    .then(function(messages) {
-      this.setState({messages: messages});
+    .then(function(response) {
+      // context.
     })
   },
 
