@@ -15,6 +15,7 @@ import React, {
   Picker,
   ListView,
   TextInput,
+  ScrollView,
   TouchableHighlight,
   NavigatorIOS,
   TouchableOpacity,
@@ -317,7 +318,6 @@ var MessageContainer = React.createClass({
       }
     })
     .then(function(response) {
-      console.log('EH?', response)
       response.json().then(function(data) {
         context.setState({messages: data})
       })
@@ -373,9 +373,7 @@ var MessageContainer = React.createClass({
   },
 
   render: function() {
-    console.log('DID it get messages?', this.state.messages)
     var messageList = this.state.messages.map(function(message) {
-      console.log('MESSAGE', message)
       return (
         <View style={[styles.messageEntry]}>
           <View style={{flexDirection:'row', flex: 1}}>
@@ -591,11 +589,13 @@ var UserDrop = React.createClass({
 
   render: function() {
     var names = users.map(function(user) {
-      return user.name;
+      console.log('USERS in names', users)
+      return user;
     })
     var userList = names.map(function(user) {
       return <Option>{user}</Option>
     })
+    console.log('USER DROP', this)
     return (
       <View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 500}}>
@@ -717,7 +717,6 @@ var CategoryDrop = React.createClass({
 
 var ChoreForm = React.createClass({
   getInitialState: function() {
-    console.log('CHORE FORM', this);
     return {
       //need the text that the user inputs for choreName
       choreName: '',
@@ -843,6 +842,7 @@ var ChoreForm = React.createClass({
   },
   
   render: function() {
+    console.log('CHORE FORM STATE', this);
     return (
       <View style={{paddingTop: 10}}>
         {this.renderUser()}
@@ -966,7 +966,7 @@ var ChoreContainer = React.createClass({
 
   componentDidMount: function() {
     //sets choreContainer state to be live users load
-    this.getUsers();
+    //this.getUsers();
     //loads all chores currently in the database 
     this.loadChores();
     var that = this;
@@ -991,7 +991,7 @@ var ChoreContainer = React.createClass({
 
   renderForm: function() {
     if(this.state.showForm) {
-      return <ChoreForm sendChore={this.sendChore}/>
+      return <ChoreForm users={this.state.users} sendChore={this.sendChore}/>
     }
   },
 
@@ -1163,14 +1163,25 @@ var BillContainer = React.createClass({
 
   renderBillEntry: function(rowData){
     return (
-      <View style={[styles.messageEntry]}>
-        <Text style={{padding: 2, fontWeight: 'bold'}}>
-          Due {rowData.date}
-        </Text>
+      <View style={[styles.choreEntry]}>
+        <View style={[styles.choreData]}>
+          <Text style={{padding: 2, fontWeight: 'bold'}}>
+            Due {rowData.date}
+          </Text>
         <Text style={{padding: 2, fontStyle: 'italic'}}>
           {rowData.name}: ${rowData.total}
         </Text>
+        </View>
+        <View style={[styles.doneButtonCont]}>
+          <View style={[styles.doneButton]}>
+            <Text style={{color: 'white', marginTop: 0}} >
+              Pay
+            </Text>
+          </View>
+        </View>
       </View>
+
+
     )
   },
 
@@ -1200,13 +1211,10 @@ var PaymentContainer = React.createClass({
   renderPaymentEntry: function(rowData){
     return (
       <View style={[styles.messageEntry]}>
-        <Text style={{padding: 2}}>
-          User: {rowData.username}
-        </Text>
-        <Text style={{padding: 2}}>
-          Total: {rowData.total}
-        </Text>
         <Text style={{padding: 2, fontWeight: 'bold'}}>
+          {rowData.username} owes you {rowData.total}
+        </Text>
+        <Text style={{padding: 2}}>
           Due {rowData.date}
         </Text>
       </View>
@@ -1253,8 +1261,9 @@ var FinanceContainer = React.createClass({
   viewBillsButton: function() {
     return <TouchableHighlight underlayColor="gray"
     onPress={this.toggleBills}
+    style={[styles.finNavButtons, styles.dropdown]}
   >
-    <Text>Bills</Text>
+    <Text style={{color: 'white'}}>Bills</Text>
     </TouchableHighlight>
   },
 
@@ -1262,16 +1271,18 @@ var FinanceContainer = React.createClass({
  viewPaymentsButton: function() {
   return <TouchableHighlight underlayColor="gray"
     onPress={this.togglePayments}
+    style={[styles.finNavButtons, styles.dropdown]}
   >
-    <Text>Payments</Text>
+    <Text style={{color: 'white'}}>Payments</Text>
     </TouchableHighlight>
  },
 
   viewCreateBillButton: function() {
   return <TouchableHighlight underlayColor="gray"
     onPress={this.toggleCreateBills}
+    style={[styles.finNavButtons, styles.dropdown]}
   >
-    <Text>Create Bill</Text>
+    <Text style={{color: 'white'}}>Create Bill</Text>
     </TouchableHighlight>
  },
 
@@ -1308,7 +1319,7 @@ var FinanceContainer = React.createClass({
         {this.renderPayments()}
         {this.renderCreateBill()}
         </View>
-        <View style={[styles.finNavButtons]}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingBottom: 10}}>
           <View>
             {this.viewBillsButton()}
           </View>
@@ -1386,27 +1397,39 @@ var CreateBill = React.createClass({
 
   renderBillInput: function() {
     return (
-    <View style={{padding: 15}}>
-      <Text>Bill:</Text>
-      <TextInput
-        onChangeText={(name) => this.setState({name})}
-        value={this.state.name}
-        rejectResponderTermination={false}
-        style={styles.textInput}
-      />
+    <View style={{padding: 15, flexDirection: 'row', flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+        <Text style={{fontSize: 18}}>Bill:</Text>
+      </View>
+      <View style={{flex: 6}}>
+        <TextInput
+        placeholder='Enter bill title...'
+          onChangeText={(name) => this.setState({name})}
+          value={this.state.name}
+          rejectResponderTermination={false}
+          style={styles.financeInput}
+        />
+      </View>
     </View>
     )
   },
 
   renderTotalInput: function() {
     return (
-      <View>
-        <Text style={{paddingLeft: 15}}>Total:</Text>
-        <TextInput
-          onChangeText={(total) => this.setState({total})}
-          value={this.state.total}
-          rejectResponderTermination={false}
-          style={styles.textInput}/>
+      <View style={{padding: 15, flexDirection: 'row', flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <Text 
+          style={{fontSize: 18}}>Total:</Text>
+        </View>
+        <View style={{flex: 6}}>
+          <TextInput
+            placeholder='Enter bill total...'
+            onChangeText={(total) => this.setState({total})}
+            value={this.state.total}
+            rejectResponderTermination={false}
+            style={styles.financeInput}
+          />
+        </View>
       </View>
     )
   },
@@ -1419,16 +1442,13 @@ var CreateBill = React.createClass({
 
   renderDateInput: function(){
     return (
-        <TouchableHighlight
-        style={{
-            borderColor: 'green', 
-            borderRadius: 10, 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            paddingLeft: 15, paddingTop:10}}
-         underlayColor="gray" onPress={this.toggleDate} >
-          <Text>Select Date</Text>
+      <View style={{alignItems: 'center'}} >
+        <TouchableHighlight 
+          onPress={this.toggleDate}
+          style={[styles.billDateButton]}>
+          <Text style={{color: 'white'}}>Set Due Date</Text>
         </TouchableHighlight>
+      </View>
     )
   },
 
@@ -1468,10 +1488,11 @@ var CreateBill = React.createClass({
   render: function() {
     return (
       <View>
+        <View style={{paddingTop: 10}}>{this.renderDate()}</View>
         <View>
           {this.renderBillInput()}
         </View>
-        <View>
+        <View style={{marginTop: 0}}>
           {this.renderTotalInput()}
         </View>
         <View style={{padding: 10}}>
@@ -1485,41 +1506,77 @@ var CreateBill = React.createClass({
           <View>{
           this.renderSplitEvenlyButton()}
           </View>
-          <Text style={{paddingBottom: 10}}>-- OR --</Text>
+          <Text>-- OR --</Text>
           <View>
           {this.renderCustomSplitButton()}
           </View>
         </View>
-        <View style={{padding:10}}>{this.renderCustomSplit()}</View>
-        <View style={{paddingTop: 10}}>{this.renderDate()}</View>
+        <View>{this.renderCustomSplit()}</View>
       </View>
     )
   }
 });
 
 var CustomSplitContainer = React.createClass({
+  getInitialState: function() {
+    return {showKeyboard: false}
+  },
+
+  renderKeyboard: function() {
+      if(this.state.showKeyboard) {
+        return (<View style={{height: 250}}>
+        </View>)
+      }
+    },
+
+    toggleKeyboardTrue: function() {
+    this.setState({showKeyboard: true})
+  },
+
+  toggleKeyboardFalse: function() {
+    this.setState({showKeyboard: false})
+  },
+
   render: function() {
+  var context = this; 
   var userlist = users.map(function(user) {
     return (
-      <View>
-      <Text style={{padding: 2}}>{user}: </Text>
-      <TextInput
-          rejectResponderTermination={false}
-          style={styles.textInput}
-      />
-      </View>
+      
+        <View style={{padding: 15, flexDirection: 'row', flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+            <Text style={{fontSize: 18}}>{user}:</Text>
+          </View>
+          <View style={{flex: 6}}>
+            <TextInput
+              onFocus={context.toggleKeyboardTrue}
+              rejectResponderTermination={false}
+              style={styles.financeInput}
+            />
+          </View>
+        </View>
     )
   });
     return (
       <View>
-        <View style={{padding: 1}}>{userlist}</View>
-        <TouchableHighlight>
-          <Text style={{padding: 1}} underlayColor="gray" onPress={this.props.addBillandClose}>Submit</Text>
-        </TouchableHighlight>
-        <View style={{alignItems: 'center'}}>
-         <Text underlayCoor="gray" onPress={this.props.toggleClose}>Close</Text>
+        <ScrollView style={{height: 200}}> 
+          <View style={{padding: 1}}>{userlist}</View>
+        </ScrollView>
+        <View style={{flexDirection: 'row', paddingTop: 10}}>
+          <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}} >
+            <TouchableHighlight 
+              onPress={this.props.addBillandClose}
+              style={[styles.setDateButton]}>
+              <Text style={{color: 'white'}}>Submit</Text>
+            </TouchableHighlight>
+          </View>
+          <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+           <Text style={{marginTop: 10, alignItems: 'center', justifyContent: 'center'}} underlayCoor="gray" onPress={this.props.toggleClose}>Close</Text>
+          </View>
         </View>
+        {this.renderKeyboard()}
       </View>
+
+      
     )
   }
 })
@@ -1545,10 +1602,16 @@ const styles = StyleSheet.create({
     alignItems: 'stretch'
   },
   finNavButtons: {
-    flex: 1,
+    width: 115,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-around'
+    borderRadius: 10,
+    backgroundColor: '#5bc0de',
+    borderWidth: 1,
+    borderColor: 'black',
+    marginLeft: 5,
+    marginRight: 5
   },
   navContainer: {
     flex: 1,
@@ -1611,6 +1674,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 5
   },
+  financeInput: {
+    paddingLeft: 8,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    width: 260,
+    alignSelf: 'center',
+    borderRadius: 5
+  },
   choreInput: {
     paddingLeft: 8,
     height: 33,
@@ -1637,6 +1709,32 @@ const styles = StyleSheet.create({
   },
   setDateButton: {
     width: 102,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#5bc0de',
+    borderWidth: 1,
+    borderColor: 'black',
+    marginLeft: 5,
+    marginRight: 5
+  },
+
+  submitButton: {
+    width: 102,
+    height: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#5bc0de',
+    borderWidth: 1,
+    borderColor: 'black',
+    marginLeft: 5,
+    marginRight: 5,
+  },
+
+  billDateButton: {
+    width: 333,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1708,7 +1806,7 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     //flex: 1,
-    marginTop: 20,
+    marginTop: 15,
     alignItems: 'center',
     justifyContent: 'center'
     // alignItems: 'center',
