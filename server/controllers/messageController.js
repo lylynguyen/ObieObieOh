@@ -4,10 +4,10 @@ var jwt = require('jwt-simple');
 module.exports = {
 
   get: function(req, res) {
-    var token = (jwt.decode(req.headers.token, process.env.secret_code));
-    console.log('GET MESSAGES TOKEN: ', token);
-    var params = [token.houseId];
-    messageModel.get(params, function (err, results) {
+    // var token = (jwt.decode(req.headers.token, process.env.secret_code));
+    // console.log('GET MESSAGES TOKEN: ', token);
+    // var params = [token.houseId];
+    messageModel.get(function (err, results) {
       if (err) {
         res.sendStatus(500);
       }

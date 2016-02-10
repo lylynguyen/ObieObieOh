@@ -44,7 +44,7 @@ var chores = [
   //{category: 'Bathroom', name: 'Justin', choreName: 'buy new stall for HR'}
 ]
 
-var users = [];
+var users = ['Joey', 'Lyly', 'Justin', 'Nick'];
 
 var finance = [{bill: "Rent", total: "$200.00"}, {bill: "Electric", total: "$50.00"}];
 
@@ -55,6 +55,7 @@ var billHistory = [{username: 'lyly', payer: 'Nick',total: 200, name: 'rent', da
 var payments = [{username: 'lyly', payee: 'Nick',total: 200, name: 'rent', date: '2016-03-03', datepaid: null}, {username: 'Justin', payee: 'Nick', total: 200, name: 'water', date: '2016-03-04', datepaid: null}];
 
 var billSplit = [];
+
 
 var gDate; 
 var gUser;
@@ -291,33 +292,35 @@ clear user input text field on message submission
 var MessageContainer = React.createClass({
   getInitialState: function() {
     //load messages upon loading
-    setTimeout(this.loadMessages, 500);
-    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    //var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
       messages: messages,
-      dataSource: ds.cloneWithRows(messages),
       showKeyboard: false
     };
   },
 
   componentDidMount: function () {
+    this.loadMessages(); 
     //loads messages, taken from web app message container
     var context=this;
     //socket.on('message', context.loadMessages);
   },
 
   loadMessages: function() {
-    console.log('LOADING MESSAGES'); 
-    fetch(process.env.Base_URL + '/messages', {
+    var context = this; 
+    fetch('http://localhost:8080/messages', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'token': AsyncStorage.getItem('obie')
+        //'token': AsyncStorage.getItem('obie')
       }
     })
-    .then(function(messages) {
-      this.setState({messages: messages});
+    .then(function(response) {
+      console.log('EH?', response)
+      response.json().then(function(data) {
+        context.setState({messages: data})
+      })
     })
   },
 
@@ -351,7 +354,7 @@ var MessageContainer = React.createClass({
   },
 
   //consider adding date to the message entry 
-  renderMessageEntry: function(rowData) {
+  renderMessageEntry: function(rowData) { 
     return (
       <View style={[styles.messageEntry]}>
         <View style={{flexDirection:'row', flex: 1}}>
@@ -370,13 +373,31 @@ var MessageContainer = React.createClass({
   },
 
   render: function() {
+    console.log('DID it get messages?', this.state.messages)
+    var messageList = this.state.messages.map(function(message) {
+      console.log('MESSAGE', message)
+      return (
+        <View style={[styles.messageEntry]}>
+          <View style={{flexDirection:'row', flex: 1}}>
+            <Text style={{flex: 5, fontStyle: 'italic'}}>
+              {message.userId}
+            </Text>
+            <Text style={{fontStyle: 'italic'}}>
+              {message.time}
+            </Text>
+          </View>
+          <Text style={{fontWeight: 'bold'}}>
+            {message.text}
+          </Text>
+        </View>
+      )
+    })
     return (
       <View style={[styles.messageContainer]}>
         <Text style={styles.viewTitle}>Messages</Text>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={this.renderMessageEntry}
-        />
+        <View style={[styles.messageContainer]}>
+          {messageList}
+        </View>
         <MessageForm sendMessage={this.sendMessage} />
       </View>
     )
@@ -880,13 +901,15 @@ var ChoreContainer = React.createClass({
     var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
       //will be replaced by loadChores()
-      chores: chores,
+      chores: [],
       dataSource: ds.cloneWithRows(chores),
       //will be replaced by getUsers() called on compdidmount
-      users: users,
+      users: [],
       showAddButton: true
     };
   },
+
+
 
   //WORKING INTERACTION WITH THE DATABASE, NOTE HOW TO
   //HANDLE PROMISE OBJECT BELOW 
@@ -907,7 +930,7 @@ var ChoreContainer = React.createClass({
     .then(function(response) {
       response.json().then(function(data) { 
         //data is an array of four users
-        users = data
+        this.setState({users: data}); 
       });
       //update state users array with response
       // console.log('USERS FROM DB', response.status);
@@ -918,7 +941,7 @@ var ChoreContainer = React.createClass({
   },
 
   loadChores: function() {
-    console.log('LOANDING CHORES')
+    var context = this; 
     //verified that this was triggered on comp mount 
     fetch('http://localhost:8080/chores/', {
       method: 'GET',
@@ -929,9 +952,9 @@ var ChoreContainer = React.createClass({
       }
     })
     .then(function(response) {
-      response.json().then(function(data) { 
+        response.json().then(function(data) { 
         //data is an array of four users
-        chores = data; 
+        context.setState({chores: data}); 
       });
     })
     .catch(function() {
@@ -1028,37 +1051,38 @@ var ChoreContainer = React.createClass({
   },
 
   render: function() {
-    console.log('UPDATED in RENDER?', chores); 
+    var context = this; 
+    var choreList = this.state.chores.map(function(chore) {
+      return (
+        <View key={chore} style={[styles.choreEntry]}>
+          <View style={[styles.choreData]}>
+            <Text style={{fontStyle: 'italic', fontWeight: 'bold'}}>
+              {chore.userId} ~ {chore.category}
+            </Text>
+            <Text>
+              {chore.name}
+            </Text>
+            <Text>
+              Complete by: {chore.dueDate}
+            </Text>
+          </View>
+          <View style={[styles.doneButtonCont]}>
+            <View style={[styles.doneButton]}>
+              <Text 
+              style={{color: 'white'}}
+              onPress={context.updateChoreStatus}>
+                Done?
+              </Text>
+            </View>
+          </View>
+        </View>)
+    })
     return (
       <View style={[styles.messageContainer]}>
         <Text style={styles.viewTitle}>Chores</Text>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={(rowData) => (
-            <View style={[styles.choreEntry]}>
-              <View style={[styles.choreData]}>
-                <Text style={{fontStyle: 'italic', fontWeight: 'bold'}}>
-                  {rowData.name} ~ {rowData.category}
-                </Text>
-                <Text>
-                  {rowData.choreName}
-                </Text>
-                <Text>
-                  Complete by: {rowData.date}
-                </Text>
-              </View>
-              <View style={[styles.doneButtonCont]}>
-                <View style={[styles.doneButton]}>
-                  <Text 
-                  style={{color: 'white'}}
-                  onPress={this.updateChoreStatus}>
-                    Done?
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-        />
+        <View style={[styles.messageContainer]}>
+          {choreList}
+        </View>
         {this.renderShowAddButton()}
         {this.renderForm()}
       </View>
@@ -1139,15 +1163,12 @@ var BillContainer = React.createClass({
 
   renderBillEntry: function(rowData){
     return (
-      <View style={[styles.messageEntry, border('black')]}>
-        <Text style={{padding: 2}}>
-          Bill Name: {rowData.name}
+      <View style={[styles.messageEntry]}>
+        <Text style={{padding: 2, fontWeight: 'bold'}}>
+          Due {rowData.date}
         </Text>
-        <Text style={{padding: 2}}>
-          Total: {rowData.total}
-        </Text>
-        <Text style={{padding: 2}}>
-        Due Date: {rowData.date}
+        <Text style={{padding: 2, fontStyle: 'italic'}}>
+          {rowData.name}: ${rowData.total}
         </Text>
       </View>
     )
@@ -1155,7 +1176,7 @@ var BillContainer = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.paymentContainer, border('red')]}>
+      <View style={[styles.paymentContainer]}>
         <Text style={styles.viewTitle}>Bills</Text>
         <ListView
           dataSource={this.state.dataSource}
@@ -1178,15 +1199,15 @@ var PaymentContainer = React.createClass({
 
   renderPaymentEntry: function(rowData){
     return (
-      <View style={[styles.messageEntry, border('black')]}>
+      <View style={[styles.messageEntry]}>
         <Text style={{padding: 2}}>
           User: {rowData.username}
         </Text>
         <Text style={{padding: 2}}>
           Total: {rowData.total}
         </Text>
-        <Text style={{padding: 2}}>
-          Date: {rowData.date}
+        <Text style={{padding: 2, fontWeight: 'bold'}}>
+          Due {rowData.date}
         </Text>
       </View>
     )
@@ -1194,7 +1215,7 @@ var PaymentContainer = React.createClass({
 
   render: function(){
     return (
-      <View style={[styles.paymentContainer, border('black')]}>
+      <View style={[styles.paymentContainer]}>
         <Text style={styles.viewTitle}>Payments</Text>
         <ListView
         dataSource={this.state.dataSource}
@@ -1281,13 +1302,13 @@ var FinanceContainer = React.createClass({
 
   render: function() {
     return (
-      <View style={[styles.finContainer, border('orange')]}>
-        <View style={[styles.finBillPayContainer, border('purple')]}>
+      <View style={[styles.finContainer]}>
+        <View style={[styles.finBillPayContainer]}>
         {this.renderBills()}
         {this.renderPayments()}
         {this.renderCreateBill()}
         </View>
-        <View style={[styles.finNavButtons, border('red')]}>
+        <View style={[styles.finNavButtons]}>
           <View>
             {this.viewBillsButton()}
           </View>
@@ -1329,8 +1350,7 @@ var CreateBill = React.createClass({
   setDateButton: function() {
     return <TouchableHighlight
       underlayColor="gray"
-      onPress={this.toggleDate}
-      style={border('black')}>
+      onPress={this.toggleDate}>
       <Text>Set Date</Text>
     ></TouchableHighlight>
   },
@@ -1339,7 +1359,7 @@ var CreateBill = React.createClass({
     var billObject = {
       name: this.state.name,
       total: this.state.total,
-      date: gDate,
+      date: gDate.toString().split(' ').slice(0, 4).join(' '),
     }
     bills.push(billObject);
   },
@@ -1414,18 +1434,25 @@ var CreateBill = React.createClass({
 
   renderSplitEvenlyButton: function(){
     return (
-      <TouchableHighlight 
-        onPress={this.addBill} underlayColor="gray">
-        <Text>Split Evenly</Text>
-      </TouchableHighlight>
+      <View style={{alignItems: 'center', paddingBottom: 25, paddingTop: 10}} >
+        <TouchableHighlight 
+          onPress={this.addBill}
+          style={[styles.setDateButton]}>
+          <Text style={{color: 'white'}}>Split Evenly</Text>
+        </TouchableHighlight>
+      </View>
     )
   },
 
   renderCustomSplitButton: function() {
     return (
-      <TouchableHighlight underlayColor="gray" onPress={this.toggleCustomSplit}>
-        <Text>Custom Split</Text>
-      </TouchableHighlight>
+      <View style={{alignItems: 'center', paddingBottom: 25, paddingTop: 10}} >
+        <TouchableHighlight 
+          onPress={this.toggleCustomSplit}
+          style={[styles.setDateButton]}>
+          <Text style={{color: 'white'}}>Custom Split</Text>
+        </TouchableHighlight>
+      </View>
     )
   },
 
@@ -1458,6 +1485,7 @@ var CreateBill = React.createClass({
           <View>{
           this.renderSplitEvenlyButton()}
           </View>
+          <Text style={{paddingBottom: 10}}>-- OR --</Text>
           <View>
           {this.renderCustomSplitButton()}
           </View>
@@ -1551,7 +1579,7 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flex: 8,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'stretch'
   },
   form: {

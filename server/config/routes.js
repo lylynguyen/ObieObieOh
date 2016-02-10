@@ -58,7 +58,7 @@ module.exports = function(app, express) {
   //app.get('/users/house', userController.checkIfUserHasHouse)
 
   //Messages
-  app.get('/messages', Auth.isLoggedInUser, messageController.get);
+  app.get('/messages', messageController.get);
   app.post('/messages', Auth.isLoggedInUser, messageController.post);
   //Landlord Messages
   app.get('/messages/landlord', Auth.isLoggedInUser, messageController.getLandlordChat)
