@@ -1110,8 +1110,11 @@ var Login = React.createClass({
     return (
         <View style={styles.navWrapper}>
           <Image
-          style={{height: 80, width: 200, marginTop: 15}}
+          style={{height: 80, width: 200, marginTop: 25}}
           source={require('./obie_logo_copy.png')} />
+          <View style={{marginTop: 15, marginBottom: 15}}>
+            <Text style={{fontSize: 24, fontStyle: 'italic'}}>Welcome Home</Text>
+          </View>
           <View style={{marginTop: 10}}>
             <Text style={{justifyContent: 'center', marginBottom: 7}}>Email: </Text>
             <TextInput 
@@ -1212,7 +1215,7 @@ var PaymentContainer = React.createClass({
     return (
       <View style={[styles.messageEntry]}>
         <Text style={{padding: 2, fontWeight: 'bold'}}>
-          {rowData.username} owes you {rowData.total}
+          {rowData.username} owes you ${rowData.total}
         </Text>
         <Text style={{padding: 2}}>
           Due {rowData.date}
@@ -1319,7 +1322,7 @@ var FinanceContainer = React.createClass({
         {this.renderPayments()}
         {this.renderCreateBill()}
         </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingBottom: 10}}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingBottom: 25, paddingLeft: 10, paddingRight: 10}}>
           <View>
             {this.viewBillsButton()}
           </View>
@@ -1548,7 +1551,6 @@ var CustomSplitContainer = React.createClass({
           </View>
           <View style={{flex: 6}}>
             <TextInput
-              onFocus={context.toggleKeyboardTrue}
               rejectResponderTermination={false}
               style={styles.financeInput}
             />
@@ -1558,10 +1560,10 @@ var CustomSplitContainer = React.createClass({
   });
     return (
       <View>
-        <ScrollView style={{height: 200}}> 
+        <ScrollView style={{height: 175}}> 
           <View style={{padding: 1}}>{userlist}</View>
         </ScrollView>
-        <View style={{flexDirection: 'row', paddingTop: 10}}>
+        <View style={{flexDirection: 'row', paddingTop: 20}}>
           <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}} >
             <TouchableHighlight 
               onPress={this.props.addBillandClose}
@@ -1602,7 +1604,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch'
   },
   finNavButtons: {
-    width: 115,
+    width: 105,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
