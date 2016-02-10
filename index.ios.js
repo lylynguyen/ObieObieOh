@@ -46,6 +46,16 @@ var chores = [
 
 var users = [];
 
+var finance = [{bill: "Rent", total: "$200.00"}, {bill: "Electric", total: "$50.00"}];
+
+var bills = [{total: 200, name: 'rent', date: '2016-03-03'}, {total: 200, name: 'water', date: '2016-03-04'} ];
+
+var billHistory = [{username: 'lyly', payer: 'Nick',total: 200, name: 'rent', date: '2016-03-03', datepaid: 'completed'}, {username: 'Justin', payer: 'Nick', total: 200, name: 'water', date: '2016-03-04', datepaid: 'completed'}];
+
+var payments = [{username: 'lyly', payee: 'Nick',total: 200, name: 'rent', date: '2016-03-03', datepaid: null}, {username: 'Justin', payee: 'Nick', total: 200, name: 'water', date: '2016-03-04', datepaid: null}];
+
+var billSplit = [];
+
 var gDate; 
 var gUser;
 var gCategory;
@@ -223,7 +233,7 @@ var App = React.createClass({
         <MessageContainer messages={this.state.messages} />*/}
         <ScrollableTabView>
           <MessageContainer messages={this.state.messages} tabLabel="Messages" />
-          <Login date={this.state.date} tabLabel="Login" />
+          <FinanceContainer tabLabel="Finance"/>
           <ChoreContainer chores={this.state.chores} tabLabel="Chores" />
         </ScrollableTabView>
       </View>
@@ -382,7 +392,7 @@ var MessageForm = React.createClass({
   },
 
   addMessage: function() {
-    this.toggleKeyboard();
+    this.toggleKeyboardFalse();
     var messageObject = {
       //eventually need to replace with userId from token
       name: 'Joey Holland', 
@@ -409,7 +419,7 @@ var MessageForm = React.createClass({
   // },
 
     sendMessageButton: function() {
-      return (<Text style={{padding: 2, color: 'black'}}
+      return (<Text style={{padding: 2, color: 'black', fontSize: 18, marginRight: 30}}
         onPress={this.addMessage}>
         Send 
       </Text>)
@@ -422,18 +432,22 @@ var MessageForm = React.createClass({
       }
     },
 
-  toggleKeyboard: function() {
-    this.setState({showKeyboard: !this.state.showKeyboard})
+  toggleKeyboardTrue: function() {
+    this.setState({showKeyboard: true})
+  },
+
+  toggleKeyboardFalse: function() {
+    this.setState({showKeyboard: false})
   },
 
   render: function() {
     return (
       <View style={[styles.formTest]}>
-        <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+        <View style={{flexDirection: 'row', paddingBottom: 25}}>
           <View style={{flex: 5}}>
             <TextInput 
               placeholder='Enter message...'
-              onFocus={this.toggleKeyboard}
+              onFocus={this.toggleKeyboardTrue}
               onChangeText={(text) => this.setState({text})}
               value={this.state.text}
               rejectResponderTermination={false}
@@ -518,7 +532,7 @@ var DatePickerExample = React.createClass({
             timeZoneOffsetInMinutes={this.state.timeZoneOffsetInHours * 60}
             onDateChange={this.onDateChange}
             minuteInterval={30}
-            style={[{height: 405}]}
+            style={[{height: 500}]}
           />
         </View>
         <View 
@@ -563,7 +577,7 @@ var UserDrop = React.createClass({
     })
     return (
       <View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 405}}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 500}}>
           <Select
             width={250}
             ref="SELECT1"
@@ -613,7 +627,7 @@ var CategoryDrop = React.createClass({
   render: function() {
     return (
       <View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 405 }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 500 }}>
           <Select
             width={250}
             ref="SELECT2"
@@ -801,7 +815,7 @@ var ChoreForm = React.createClass({
   },
 
   sendChoreButton: function() {
-    return <Text style={{padding: 2, color: 'black'}}
+    return <Text style={{padding: 2, color: 'black', fontSize: 18, marginRight: 30}}
         onPress={this.addChore}>
         Post 
       </Text>
@@ -819,7 +833,7 @@ var ChoreForm = React.createClass({
           {this.setDateButton()}
         </View>
         <View style={[styles.formTest]}>
-          <View style={{flexDirection: 'row', paddingBottom: 25, paddingLeft: 15}}>
+          <View style={{flexDirection: 'row', paddingBottom: 25}}>
             <View style={{flex: 5}}>
               <TextInput
               //updates state text, which will be used to submit
@@ -1112,9 +1126,402 @@ var Navigator = React.createClass ({
   },
 });
 
+////////////////////////////////// FINANCE CONTAINER ///////////////////////////////
+
+var BillContainer = React.createClass({
+  getInitialState: function(){
+    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    return {
+      bills: bills,
+      dataSource: ds.cloneWithRows(bills)
+    }
+  },
+
+  renderBillEntry: function(rowData){
+    return (
+      <View style={[styles.messageEntry, border('black')]}>
+        <Text style={{padding: 2}}>
+          Bill Name: {rowData.name}
+        </Text>
+        <Text style={{padding: 2}}>
+          Total: {rowData.total}
+        </Text>
+        <Text style={{padding: 2}}>
+        Due Date: {rowData.date}
+        </Text>
+      </View>
+    )
+  },
+
+  render: function() {
+    return (
+      <View style={[styles.paymentContainer, border('red')]}>
+        <Text style={styles.viewTitle}>Bills</Text>
+        <ListView
+          dataSource={this.state.dataSource}
+          renderRow={this.renderBillEntry}
+        />
+      </View>
+    )
+  }
+})
+
+
+var PaymentContainer = React.createClass({
+  getInitialState: function() {
+    var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2})
+    return {
+      payments: payments,
+      dataSource: ds.cloneWithRows(payments)
+    }
+  },
+
+  renderPaymentEntry: function(rowData){
+    return (
+      <View style={[styles.messageEntry, border('black')]}>
+        <Text style={{padding: 2}}>
+          User: {rowData.username}
+        </Text>
+        <Text style={{padding: 2}}>
+          Total: {rowData.total}
+        </Text>
+        <Text style={{padding: 2}}>
+          Date: {rowData.date}
+        </Text>
+      </View>
+    )
+  },
+
+  render: function(){
+    return (
+      <View style={[styles.paymentContainer, border('black')]}>
+        <Text style={styles.viewTitle}>Payments</Text>
+        <ListView
+        dataSource={this.state.dataSource}
+        renderRow={this.renderPaymentEntry}
+        />
+      </View>
+    )
+  }
+});
+
+var FinanceContainer = React.createClass({
+  getInitialState: function() {
+    return {
+      bills: bills,
+      payments: payments,
+      showBills: true,
+      showPayments: false,
+      showCreateBill: false
+    }
+  },
+  toggleBills: function() {
+    this.state.showPayments ? this.setState({showPayments: false}) : this.setState({showCreateBill: false})
+    this.setState({showBills: !this.state.showBills})
+  },
+
+  togglePayments: function() {
+    this.state.showBills ?  this.setState({showBills: false}) : this.setState({showCreateBill: false})
+    this.setState({showPayments: !this.state.showPayments})
+  },
+  toggleCreateBills: function() {
+    this.state.showPayments ? this.setState({showPayments: false}) : this.setState({showBills: false})
+    this.setState({showCreateBill: !this.state.showCreateBill})
+  },
+
+  viewBillsButton: function() {
+    return <TouchableHighlight underlayColor="gray"
+    onPress={this.toggleBills}
+  >
+    <Text>Bills</Text>
+    </TouchableHighlight>
+  },
+
+
+ viewPaymentsButton: function() {
+  return <TouchableHighlight underlayColor="gray"
+    onPress={this.togglePayments}
+  >
+    <Text>Payments</Text>
+    </TouchableHighlight>
+ },
+
+  viewCreateBillButton: function() {
+  return <TouchableHighlight underlayColor="gray"
+    onPress={this.toggleCreateBills}
+  >
+    <Text>Create Bill</Text>
+    </TouchableHighlight>
+ },
+
+ renderPayments: function() {
+  if(this.state.showPayments){
+    return (
+      <PaymentContainer/>
+    )
+  }
+ },
+
+
+ renderBills: function() {
+  if(this.state.showBills) {
+    return (
+    <BillContainer/>
+    )
+  }
+ },
+
+ renderCreateBill: function() {
+  if(this.state.showCreateBill){
+    return (
+      <CreateBill sendBill = {this.sendBill} />
+    )
+  }
+ },
+
+  render: function() {
+    return (
+      <View style={[styles.finContainer, border('orange')]}>
+        <View style={[styles.finBillPayContainer, border('purple')]}>
+        {this.renderBills()}
+        {this.renderPayments()}
+        {this.renderCreateBill()}
+        </View>
+        <View style={[styles.finNavButtons, border('red')]}>
+          <View>
+            {this.viewBillsButton()}
+          </View>
+          <View>
+            {this.viewPaymentsButton()}
+          </View>
+          <View>
+            {this.viewCreateBillButton()}
+          </View>
+        </View>
+      </View>
+    )
+  }
+});
+
+var CreateBill = React.createClass({
+  getInitialState: function() {
+    return {
+      name:'',
+      total:'',
+      date: gDate,
+      bills: bills,
+      showDate: false,
+      showCustomSplit: false,
+      splitEvenly: false
+    }
+  },
+
+  toggleDate: function() {
+    this.setState({showDate: !this.state.showDate})
+  },
+
+  renderDate: function() {
+    if(this.state.showDate) {
+      return <DatePickerExample toggleClose={this.toggleClose}/>
+    }
+  },
+
+  setDateButton: function() {
+    return <TouchableHighlight
+      underlayColor="gray"
+      onPress={this.toggleDate}
+      style={border('black')}>
+      <Text>Set Date</Text>
+    ></TouchableHighlight>
+  },
+
+  addBill: function() {
+    var billObject = {
+      name: this.state.name,
+      total: this.state.total,
+      date: gDate,
+    }
+    bills.push(billObject);
+  },
+
+  // sendBillButton: function() {
+  //   return <TouchableHighlight 
+  //   underlayColor='gray'
+  //   onPress={this.addBill}><Text>Submit Bill</Text>
+  //   </TouchableHighlight>
+  // },
+
+  toggleCustomSplit: function() {
+    this.setState({showCustomSplit: !this.state.showCustomSplit})
+  },
+
+  toggleClose: function() {
+    if(this.state.showDate) {
+      this.setState({showDate: !this.state.showDate})
+    }
+    if(this.state.showCustomSplit) {
+      this.setState({showCustomSplit: !this.state.showCustomSplit})
+    }
+  },
+
+  renderBillInput: function() {
+    return (
+    <View style={{padding: 15}}>
+      <Text>Bill:</Text>
+      <TextInput
+        onChangeText={(name) => this.setState({name})}
+        value={this.state.name}
+        rejectResponderTermination={false}
+        style={styles.textInput}
+      />
+    </View>
+    )
+  },
+
+  renderTotalInput: function() {
+    return (
+      <View>
+        <Text style={{paddingLeft: 15}}>Total:</Text>
+        <TextInput
+          onChangeText={(total) => this.setState({total})}
+          value={this.state.total}
+          rejectResponderTermination={false}
+          style={styles.textInput}/>
+      </View>
+    )
+  },
+
+  renderCustomSplit: function() {
+    if(this.state.showCustomSplit) {
+      return <CustomSplitContainer toggleClose={this.toggleClose}/>
+    }
+  },
+
+  renderDateInput: function(){
+    return (
+        <TouchableHighlight
+        style={{
+            borderColor: 'green', 
+            borderRadius: 10, 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            paddingLeft: 15, paddingTop:10}}
+         underlayColor="gray" onPress={this.toggleDate} >
+          <Text>Select Date</Text>
+        </TouchableHighlight>
+    )
+  },
+
+  renderSplitEvenlyButton: function(){
+    return (
+      <TouchableHighlight 
+        onPress={this.addBill} underlayColor="gray">
+        <Text>Split Evenly</Text>
+      </TouchableHighlight>
+    )
+  },
+
+  renderCustomSplitButton: function() {
+    return (
+      <TouchableHighlight underlayColor="gray" onPress={this.toggleCustomSplit}>
+        <Text>Custom Split</Text>
+      </TouchableHighlight>
+    )
+  },
+
+  addBillandClose: function(){
+    return (
+      <View>
+        {this.addBill}
+        {this.toggleClose}
+      </View>
+    )
+  },
+
+  render: function() {
+    return (
+      <View>
+        <View>
+          {this.renderBillInput()}
+        </View>
+        <View>
+          {this.renderTotalInput()}
+        </View>
+        <View style={{padding: 10}}>
+          {this.renderDateInput()}
+        </View>
+        <View style={{
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'space-around'
+        }}>
+          <View>{
+          this.renderSplitEvenlyButton()}
+          </View>
+          <View>
+          {this.renderCustomSplitButton()}
+          </View>
+        </View>
+        <View style={{padding:10}}>{this.renderCustomSplit()}</View>
+        <View style={{paddingTop: 10}}>{this.renderDate()}</View>
+      </View>
+    )
+  }
+});
+
+var CustomSplitContainer = React.createClass({
+  render: function() {
+  var userlist = users.map(function(user) {
+    return (
+      <View>
+      <Text style={{padding: 2}}>{user}: </Text>
+      <TextInput
+          rejectResponderTermination={false}
+          style={styles.textInput}
+      />
+      </View>
+    )
+  });
+    return (
+      <View>
+        <View style={{padding: 1}}>{userlist}</View>
+        <TouchableHighlight>
+          <Text style={{padding: 1}} underlayColor="gray" onPress={this.props.addBillandClose}>Submit</Text>
+        </TouchableHighlight>
+        <View style={{alignItems: 'center'}}>
+         <Text underlayCoor="gray" onPress={this.props.toggleClose}>Close</Text>
+        </View>
+      </View>
+    )
+  }
+})
+
 ////////////////////// STYLES ////////////////////////////
 
 const styles = StyleSheet.create({
+  paymentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    backgroundColor: '#F5FCFF',
+  },
+  splitForm: {
+    justifyContent: 'flex-end'
+  },
+  finContainer: {
+    flex: 1,
+    alignItems: 'stretch'
+  },
+  finBillPayContainer: {
+    flex: 9,
+    alignItems: 'stretch'
+  },
+  finNavButtons: {
+    flex: 1,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-around'
+  },
   navContainer: {
     flex: 1,
   },
@@ -1158,7 +1565,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     paddingLeft: 8,
-    height: 33,
+    height: 40,
     borderColor: 'gray',
     borderWidth: 1,
     width: 280,
@@ -1168,10 +1575,10 @@ const styles = StyleSheet.create({
   },
   messageInput: {
     paddingLeft: 8,
-    height: 33,
+    height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    width: 250,
+    width: 260,
     alignSelf: 'center',
     marginTop: 10,
     borderRadius: 5
@@ -1196,17 +1603,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'green',
+    backgroundColor: '#5bc0de',
     margin: 10,
     borderRadius: 5
   },
   setDateButton: {
-    width: 85,
+    width: 102,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    backgroundColor: 'green',
+    backgroundColor: '#5bc0de',
     borderWidth: 1,
     borderColor: 'black',
     marginLeft: 5,
@@ -1234,7 +1641,7 @@ const styles = StyleSheet.create({
     height: 100,
     top: 200,
     left: 40,
-    backgroundColor: 'green',
+    backgroundColor: '#5bc0de',
   },
   choreEntry: {
     flexDirection: 'row',
@@ -1242,7 +1649,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
     marginTop: 1,
     marginBottom: 1,
-    backgroundColor: 'green'
+    backgroundColor: '#5bc0de'
   },
   messageEntry: {
     marginLeft: 5,
@@ -1260,10 +1667,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'black',
     width: 280,
-    height: 30,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'green',
+    backgroundColor: '#5bc0de',
     borderRadius: 10
   },
   doneButtonCont: {
