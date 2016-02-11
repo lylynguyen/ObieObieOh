@@ -295,21 +295,45 @@ var MessageContainer = React.createClass({
     //load messages upon loading
     //var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     return {
+      email: '',
       messages: messages,
-      showKeyboard: false
+      showKeyboard: false,
+      userId: '',
+      houseId: ''
     };
   },
 
   componentDidMount: function () {
-    this.loadMessages(); 
+    var context = this; 
+    AsyncStorage.getItem('email')
+      .then(function(email) {
+        context.setState({email: email})
+        context.getHouseId(context.state.email);
+      });
     //loads messages, taken from web app message container
-    var context=this;
     //socket.on('message', context.loadMessages);
   },
 
-  loadMessages: function() {
+  getHouseId: function(email) {
     var context = this; 
-    fetch('http://localhost:8080/messages', {
+    fetch('http://localhost:8080/api/mobile/users/' + email, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(function(response) {
+       response.json().then(function(data) {
+        context.setState({houseId: data[0].HouseId, userId: data[0].id})
+        context.loadMessages(context.state.houseId); 
+      })
+    })
+  },
+
+  loadMessages: function(houseId) {
+    var context = this; 
+    fetch('http://localhost:8080/api/mobile/messages/' + houseId, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -1099,8 +1123,9 @@ var Login = React.createClass({
   },
 
   navToApp: function() {
+    console.log('in nav to app');
     AsyncStorage.setItem('email', this.state.email);
-    AsyncStorage.setItem('password', this.state.password);
+    //AsyncStorage.setItem('password', this.state.password);
     this.props.navigator.push({
       component: App
     });
