@@ -915,13 +915,13 @@ var ChoreContainer = React.createClass({
         'Content-Type': 'application/json'
       }
     })
-    // .then(function(response) {
-    //     response.json().then(function(data) {
-    //     context.setState({houseId: data[0].HouseId, userId: data[0].id})
-    //     context.loadChores(context.state.houseId);
-    //     context.getUsers(context.state.houseId);
-    //   })
-    // })
+    .then(function(response) {
+        response.json().then(function(data) {
+        context.setState({houseId: data[0].HouseId, userId: data[0].id})
+        context.loadChores(context.state.houseId);
+        context.getUsers(context.state.houseId);
+      })
+    })
   },
 
   // WORKING INTERACTION WITH THE DATABASE, NOTE HOW TO
@@ -935,7 +935,6 @@ var ChoreContainer = React.createClass({
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        //'token': AsyncStorage.getItem('obie')
       }
     })
     .then(function(response) {
@@ -949,7 +948,7 @@ var ChoreContainer = React.createClass({
   },
 
     getUsers: function(houseId) {
-    var context = this;//verified that this was triggered on comp mount
+    var context = this;
     fetch('http://localhost:8080/api/mobile/users/' + houseId, {
       method: 'GET',
       headers: {
