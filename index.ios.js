@@ -88,7 +88,7 @@ roster/landlord views/user image/house code appear?
 
 var App = React.createClass({
   testConnection: function() {
-    fetch('http://localhost:8080/dummy', {
+    fetch('http://localhost:8080/api/mobile', {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -99,6 +99,9 @@ var App = React.createClass({
     .then(function(data) {
       //update state users array with response
       console.log('got data', data);
+    })
+    .then(function(responseData){
+      console.log(responseData)
     })
     .catch(function(err) {
       console.log(err);
@@ -697,44 +700,6 @@ var CategoryDrop = React.createClass({
   }
 });
 
-// var FinanceContainer = React.createClass({
-//   getInitialState: function() {
-//     showBills: true,
-//     showPayments: false,
-//     showCreate: false
-//   },
-
-//   togglePayments: function() {
-//     if(this.state.showBills) {
-//       this.setState({showBills: !this.state.showBills})
-//     } else if ()
-//     this.setState({showPayments: !this.state.showPayments})
-//   },
-
-//   renderPayments: function() {
-//     if(this.state.showPayments) {
-//       return <PaymentContainer />
-//     }
-//   },
-
-//   render: function() {
-//     //nav bar messages, finance, and chores,
-//     //Finance
-//     //Big empty space that will hold bills, payments or form
-//     {this.renderPayments()}
-//     {this.renderForm()}
-//     //buttons to dictate what goes into empty space
-//     <TouchableHighlight onPress={this.togglePayments}>
-//       <Text>Payment</Text>
-//     </TouchableHighlight>
-//   }
-// })
-
-// var PaymentContainer = React.createClass({
-//   render: function() {
-//     <Text>This is the Payment container</Text>
-//   }
-// });
 
 var ChoreForm = React.createClass({
   getInitialState: function() {
@@ -844,14 +809,16 @@ var ChoreForm = React.createClass({
     this.setState({showKeyboard: !this.state.showKeyboard})
   },
 
-  addChore: function() {
+
+  addChore: function(houseId) {
     var choreObject = {
       name: gUser,
       category: gCategory,
       choreName: this.state.choreName,
       date: gDate.toString().split(' ').slice(0, 4).join(' '),
       completed: false
-    }
+    };
+
     this.props.sendChore(choreObject);
   },
 
@@ -930,38 +897,17 @@ var ChoreContainer = React.createClass({
     };
   },
 
-    componentDidMount: function () {
-        //sets choreContainer state to be live users load
-    // this.getUsers();
-    //loads all chores currently in the database
-    // this.loadChores();
-    var context = this;
+  componentDidMount: function () {
+  var context = this;
     AsyncStorage.getItem('email')
       .then(function(email) {
         context.setState({email: email})
         context.getHouseId(context.state.email);
       });
-    //loads messages, taken from web app message container
-    //socket.on('message', context.loadMessages);
   },
 
-  // componentDidMount: function() {
-  //   var context = this;
-  //   AsyncStorage.getItem('email')
-  //     .then(functiont(email) {
-  //       context.getState({email:email})
-  //       context.getHouseId(context.state.email);
-  //     })
-  //   //sets choreContainer state to be live users load
-  //   this.getUsers();
-  //   //loads all chores currently in the database
-  //   this.loadChores();
-  //   var that = this;
-  // },
-
   getHouseId: function(email) {
-
-    var context = this;
+  var context = this;
     fetch('http://localhost:8080/api/mobile/users/' + email, {
       method: 'GET',
       headers: {
@@ -969,36 +915,17 @@ var ChoreContainer = React.createClass({
         'Content-Type': 'application/json'
       }
     })
-    .then(function(response) {
-        return response.json().then(function(data) {
-        context.setState({houseId: data[0].HouseId, userId: data[0].id})
-        context.loadChores(context.state.houseId);
-        context.getUsers(context.state.houseId);
-      })
-    })
+    // .then(function(response) {
+    //     response.json().then(function(data) {
+    //     context.setState({houseId: data[0].HouseId, userId: data[0].id})
+    //     context.loadChores(context.state.houseId);
+    //     context.getUsers(context.state.houseId);
+    //   })
+    // })
   },
-
 
   // WORKING INTERACTION WITH THE DATABASE, NOTE HOW TO
   // HANDLE PROMISE OBJECT BELOW
-  getUsers: function(houseId) {
-    var context = this;//verified that this was triggered on comp mount
-    fetch('http://localhost:8080/api/mobile/users/' + houseId, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(function(response) {
-      response.json().then(function(data) {
-      context.setState({users: data});
-      });
-    })
-     .catch(function() {
-      console.log('too bad');
-    })
-  },
 
   loadChores: function(houseId) {
     var context = this;
@@ -1017,21 +944,43 @@ var ChoreContainer = React.createClass({
       });
     })
     .catch(function() {
-      console.log('too bad');
+      console.log('loadChores too bad');
+    })
+  },
+
+    getUsers: function(houseId) {
+    var context = this;//verified that this was triggered on comp mount
+    fetch('http://localhost:8080/api/mobile/users/' + houseId, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(function(response) {
+      console.log('getUsers response', response)
+      response.json()
+    .then(function(responseData) {
+       console.log('json here?', responseData)
+        context.setState({users: responseData});
+      });
+    })
+     .catch(function() {
+      console.log('getUsers too bad');
     })
   },
 
   //used only to update chore dummy data locally
   //REMOVE WHEN DB CONNECTION HOOKED UP
-  sendChore: function(choreObj) {
-    this.state.chores.push(choreObj);
-    this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(this.state.chores),
-      chores: this.state.chores
-    })
-    this.toggleForm();
-    this.setState({showAddButton: true});
-  },
+  // sendChore: function(choreObj) {
+  //   this.state.chores.push(choreObj);
+  //   this.setState({
+  //     dataSource: this.state.dataSource.cloneWithRows(this.state.chores),
+  //     chores: this.state.chores
+  //   })
+  //   this.toggleForm();
+  //   this.setState({showAddButton: true});
+  // },
 
   toggleForm: function() {
     this.toggleAddButton();
@@ -1040,7 +989,7 @@ var ChoreContainer = React.createClass({
 
   renderForm: function() {
     if(this.state.showForm) {
-      return <ChoreForm users={this.state.users} sendChore={this.sendChore}/>
+      return <ChoreForm users={this.state.users} sendChore={this.submitChore}/>
     }
   },
 
@@ -1064,7 +1013,8 @@ var ChoreContainer = React.createClass({
 
   submitChore: function(chore) {
     //verified, receiving correct choreobj and arriving here properly
-    fetch('http://localhost:8080/chores', {
+    console.log("inside submit chore", chore);
+    fetch('http://localhost:8080/api/mobile/chores', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -1074,7 +1024,6 @@ var ChoreContainer = React.createClass({
       body: JSON.stringify(chore)
     })
     .then(function(data) {
-      this.loadChores();
       //socket.emit('chore', chore);
     })
   },
